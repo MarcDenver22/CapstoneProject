@@ -3,7 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Faculty Employee Portal</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('images/psu logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/psu logo.png') }}">
 
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -120,108 +125,301 @@
     <div class="flex h-screen overflow-hidden p-4 gap-4">
 
         <!-- ======== GLASS SIDEBAR ======== -->
-        <aside class="glass-sidebar w-[72px] rounded-2xl flex flex-col items-center py-5 flex-shrink-0 shadow-sm">
+        <aside class="glass-sidebar w-64 rounded-2xl flex flex-col py-6 px-4 flex-shrink-0 shadow-sm overflow-y-auto">
 
             <!-- Logo -->
-            <div class="mb-6">
-                <img src="{{ asset('images/psu logo.png') }}" alt="PSU Logo" class="w-10 h-10 rounded-xl object-contain">
+            <div class="mb-8 flex items-center gap-3">
+                <img src="{{ asset('images/psu logo.png') }}" alt="PSU Logo" class="w-10 h-10 rounded-lg object-contain">
+                <div>
+                    @if(auth()->user() && auth()->user()->role === 'super_admin')
+                        <h1 class="text-lg font-bold text-red-700">Super Admin</h1>
+                        <p class="text-xs text-red-600">System Control</p>
+                    @elseif(auth()->user() && auth()->user()->role === 'admin')
+                        <h1 class="text-lg font-bold text-indigo-700">Admin</h1>
+                        <p class="text-xs text-indigo-600">Dashboard</p>
+                    @elseif(auth()->user() && auth()->user()->role === 'hr')
+                        <h1 class="text-lg font-bold text-purple-700">HR Portal</h1>
+                        <p class="text-xs text-purple-600">Management</p>
+                    @else
+                        <h1 class="text-lg font-bold text-blue-700">FaceTrack</h1>
+                        <p class="text-xs text-blue-600">Employee Portal</p>
+                    @endif
+                </div>
             </div>
 
-            <!-- Divider -->
-            <div class="sidebar-divider"></div>
+            <!-- Navigation Sections -->
+            <nav class="flex-1 space-y-6">
 
-            <!-- Main Nav Icons -->
-            <nav class="flex flex-col items-center gap-1.5 mt-3 flex-1">
+                <!-- EMPLOYEE SECTION (for employees and non-HR users) -->
+                @if(auth()->user() && auth()->user()->role === 'employee')
+                <div>
+                    <p class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-3 px-2">My Account</p>
+                    <div class="space-y-1">
+                        <!-- Dashboard -->
+                        <a href="{{ route('employee.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                            <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="text-sm font-medium">Dashboard</span>
+                        </a>
+                        <!-- My DTR -->
+                        <a href="{{ route('employee.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                            <i class="fas fa-file-alt w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="text-sm font-medium">My DTR</span>
+                        </a>
+                        <!-- Attendance History -->
+                        <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                            <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="text-sm font-medium">Attendance History</span>
+                        </a>
+                        <!-- Leave Requests -->
+                        <a href="{{ route('employee.leave-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                            <i class="fas fa-calendar-times w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="text-sm font-medium">Leave Requests</span>
+                        </a>
+                    </div>
+                </div>
+                @endif
 
-                <!-- Dashboard (active) -->
-                <div class="nav-item relative">
-                    <a href="{{ route('dashboard') }}" class="nav-icon-btn active">
-                        <i class="fas fa-th-large text-[17px]"></i>
-                    </a>
-                    <span class="nav-tooltip">Dashboard</span>
+                <!-- HR SECTION (for HR users) -->
+                @if(auth()->user() && auth()->user()->role === 'hr')
+                <div>
+                    <p class="text-xs font-bold text-purple-500 uppercase tracking-widest mb-3 px-2">My Account</p>
+                    <div class="space-y-1">
+                        <!-- Dashboard -->
+                        <a href="{{ route('hr.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                            <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
+                            <span class="text-sm font-medium">Dashboard</span>
+                        </a>
+                        <!-- My DTR -->
+                        <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                            <i class="fas fa-file-alt w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
+                            <span class="text-sm font-medium">My DTR</span>
+                        </a>
+                        <!-- Attendance History -->
+                        <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                            <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
+                            <span class="text-sm font-medium">Attendance History</span>
+                        </a>
+                        <!-- Leave Requests -->
+                        <a href="{{ route('employee.leave-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                            <i class="fas fa-calendar-times w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
+                            <span class="text-sm font-medium">Leave Requests</span>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Employee -->
-                <div class="nav-item relative">
-                    <a href="#" class="nav-icon-btn">
-                        <i class="fas fa-users text-[17px]"></i>
-                    </a>
-                    <span class="nav-tooltip">Employees</span>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Info</p>
+                    <div class="space-y-1">
+                        <!-- Print DTR -->
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                            <i class="fas fa-print w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="text-sm font-medium">Print DTR</span>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- System Logs -->
-                <div class="nav-item relative">
-                    <a href="#" class="nav-icon-btn">
-                        <i class="fas fa-clipboard-list text-[17px]"></i>
-                    </a>
-                    <span class="nav-tooltip">System Logs</span>
+                <div>
+                    <p class="text-xs font-bold text-purple-500 uppercase tracking-widest mb-3 px-2">Management</p>
+                    <div class="space-y-1">
+                        <!-- Reports -->
+                        <a href="{{ route('hr.reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                            <i class="fas fa-file-chart-line w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
+                            <span class="text-sm font-medium">Attendance Reports</span>
+                        </a>
+                        <!-- Campus Updates -->
+                        <a href="{{ route('hr.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                            <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
+                            <span class="text-sm font-medium">Campus Updates</span>
+                        </a>
+                    </div>
+                </div>
+                @endif
+
+                <!-- SUPER ADMIN Section (Full system control) -->
+                @if(auth()->user() && auth()->user()->role === 'super_admin')
+                <div>
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-widest mb-3 px-2">Super Admin</p>
+                    <div class="space-y-1">
+                        <!-- System Dashboard -->
+                        <a href="{{ route('super_admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                            <i class="fas fa-tachometer-alt w-5 text-center text-gray-400 group-hover:text-red-600"></i>
+                            <span class="text-sm font-medium">System Dashboard</span>
+                        </a>
+                        <!-- User Management -->
+                        <a href="{{ route('super_admin.users') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                            <i class="fas fa-users-cog w-5 text-center text-gray-400 group-hover:text-red-600"></i>
+                            <span class="text-sm font-medium">User Management</span>
+                        </a>
+                        <!-- System Config -->
+                        <a href="{{ route('super_admin.system_config') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                            <i class="fas fa-sliders-h w-5 text-center text-gray-400 group-hover:text-red-600"></i>
+                            <span class="text-sm font-medium">System Config</span>
+                        </a>
+                        <!-- Audit Logs -->
+                        <a href="{{ route('super_admin.audit_logs') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                            <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-red-600"></i>
+                            <span class="text-sm font-medium">Audit Logs</span>
+                        </a>
+                        <!-- System Health -->
+                        <a href="{{ route('super_admin.system_health') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                            <i class="fas fa-heartbeat w-5 text-center text-gray-400 group-hover:text-red-600"></i>
+                            <span class="text-sm font-medium">System Health</span>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Attendance -->
-                <div class="nav-item relative">
-                    <a href="#" class="nav-icon-btn">
-                        <i class="fas fa-calendar-check text-[17px]"></i>
-                    </a>
-                    <span class="nav-tooltip">Attendance</span>
+                <!-- ADMIN MANAGEMENT (Super Admin can also do everything Admin does) -->
+                <div>
+                    <p class="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3 px-2">Admin Management</p>
+                    <div class="space-y-1">
+                        <!-- Dashboard -->
+                        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Dashboard</span>
+                        </a>
+                        <!-- Employees -->
+                        <a href="{{ route('admin.employees.list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-users w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Employees</span>
+                        </a>
+                        <!-- Attendance Log -->
+                        <a href="{{ route('admin.attendance.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-calendar-check w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Attendance Log</span>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Reports -->
-                <div class="nav-item relative">
-                    <a href="#" class="nav-icon-btn">
-                        <i class="fas fa-chart-bar text-[17px]"></i>
-                    </a>
-                    <span class="nav-tooltip">Reports</span>
+                <!-- REPORTS Section (for Super Admin) -->
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Reports</p>
+                    <div class="space-y-1">
+                        <!-- DTR Reports -->
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-file-alt w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">DTR Reports</span>
+                        </a>
+                        <!-- Campus Updates -->
+                        <a href="{{ route('admin.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Campus Updates</span>
+                        </a>
+                        <!-- Export -->
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-download w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Export</span>
+                        </a>
+                    </div>
+                </div>
+                @endif
+
+                <!-- ADMIN MAIN Section (only for admin, not super_admin) -->
+                @if(auth()->user() && auth()->user()->role === 'admin')
+                <div>
+                    <p class="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3 px-2">Main</p>
+                    <div class="space-y-1">
+                        <!-- Dashboard -->
+                        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Dashboard</span>
+                        </a>
+                        <!-- Employees -->
+                        <a href="{{ route('admin.employees.list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-users w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Employees</span>
+                        </a>
+                        <!-- Attendance Log -->
+                        <a href="{{ route('admin.attendance.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-calendar-check w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Attendance Log</span>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Divider -->
-                <div class="sidebar-divider my-2"></div>
-
-                <!-- Schedules -->
-                <div class="nav-item relative">
-                    <a href="#" class="nav-icon-btn">
-                        <i class="fas fa-calendar-alt text-[17px]"></i>
-                    </a>
-                    <span class="nav-tooltip">Schedules</span>
+                <!-- REPORTS Section -->
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Reports</p>
+                    <div class="space-y-1">
+                        <!-- DTR Reports -->
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-file-alt w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">DTR Reports</span>
+                        </a>
+                        <!-- Campus Updates -->
+                        <a href="{{ route('admin.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Campus Updates</span>
+                        </a>
+                        <!-- Export -->
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-download w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Export</span>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Departments -->
-                <div class="nav-item relative">
-                    <a href="#" class="nav-icon-btn">
-                        <i class="fas fa-building text-[17px]"></i>
-                    </a>
-                    <span class="nav-tooltip">Departments</span>
+                <!-- SYSTEM Section -->
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">System</p>
+                    <div class="space-y-1">
+                        <!-- Audit Logs -->
+                        <a href="{{ route('admin.audit_logs.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Audit Logs</span>
+                        </a>
+                        <!-- Settings -->
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-cog w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Settings</span>
+                        </a>
+                    </div>
                 </div>
+                @endif
 
             </nav>
 
-            <!-- Bottom: Settings & Profile -->
-            <div class="flex flex-col items-center gap-1.5 mt-auto">
-                <div class="sidebar-divider mb-2"></div>
-
-                <div class="nav-item relative">
-                    <a href="#" class="nav-icon-btn">
-                        <i class="fas fa-cog text-[17px]"></i>
-                    </a>
-                    <span class="nav-tooltip">Settings</span>
-                </div>
+            <!-- Bottom: Profile -->
+            <div class="mt-auto border-t border-gray-200 pt-4">
+                @if(auth()->user() && auth()->user()->role === 'employee')
+                    <div class="flex items-center gap-3 px-3 py-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition">
+                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
+                            <p class="text-xs text-gray-500 truncate">{{ auth()->user()->role === 'employee' ? 'Employee' : (auth()->user()->role === 'hr' ? 'HR' : ucfirst(auth()->user()->role)) }}</p>
+                        </div>
+                    </div>
+                @elseif(auth()->user() && auth()->user()->role === 'admin')
+                    <div class="flex items-center gap-3 px-3 py-3 bg-indigo-50 rounded-lg cursor-pointer hover:bg-indigo-100 transition">
+                        <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
+                            <p class="text-xs text-gray-500 truncate">Administrator</p>
+                        </div>
+                    </div>
+                @elseif(auth()->user() && auth()->user()->role === 'super_admin')
+                    <div class="flex items-center gap-3 px-3 py-3 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition">
+                        <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
+                            <p class="text-xs text-gray-500 truncate">Super Admin</p>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Logout -->
-                <div class="nav-item relative">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="nav-icon-btn hover:!bg-red-50 hover:!text-red-500">
-                            <i class="fas fa-sign-out-alt text-[17px]"></i>
-                        </button>
-                    </form>
-                    <span class="nav-tooltip">Logout</span>
-                </div>
-
-                <!-- Profile Avatar -->
-                <div class="mt-2">
-                    <div class="w-9 h-9 bg-indigo-100 rounded-full flex items-center justify-center ring-2 ring-white shadow-sm cursor-pointer hover:ring-indigo-200 transition">
-                        <i class="fas fa-user text-indigo-600 text-sm"></i>
-                    </div>
-                </div>
+                <form method="POST" action="{{ route('logout') }}" class="mt-3">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition group">
+                        <i class="fas fa-sign-out-alt w-5 text-center"></i>
+                        <span class="text-sm font-medium">Logout</span>
+                    </button>
+                </form>
             </div>
 
         </aside>
@@ -236,29 +434,54 @@
                     <p class="text-sm text-gray-400 mt-0.5">@yield('subheader', 'Faculty Employee Portal')</p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <!-- Search -->
-                    <div class="hidden md:flex items-center bg-white/60 border border-gray-200/60 rounded-xl px-3 py-2 gap-2">
-                        <i class="fas fa-search text-gray-400 text-sm"></i>
-                        <input type="text" placeholder="Search..." class="bg-transparent text-sm outline-none w-40 placeholder-gray-400">
-                    </div>
+                    @if(auth()->user() && (auth()->user()->role === 'employee' || auth()->user()->role === 'hr'))
+                        <!-- Enroll Face Button for Employees -->
+                        <a href="{{ route('employee.face_enrollment.show') }}" class="px-4 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm transition flex items-center gap-2">
+                            <i class="fas fa-camera"></i> Enroll Face
+                        </a>
 
-                    <!-- Notification Bell -->
-                    <button class="relative text-gray-400 hover:text-gray-600 transition w-10 h-10 bg-white/60 border border-gray-200/50 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-bell text-[15px]"></i>
-                        <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
-                    </button>
-
-                    <!-- Admin Avatar -->
-                    <div class="flex items-center gap-3 ml-2 bg-white/60 border border-gray-200/50 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-white/80 transition">
-                        <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-user text-indigo-600 text-sm"></i>
+                        <!-- Employee Avatar -->
+                        <div class="flex items-center gap-3 ml-2 bg-white/60 border border-gray-200/50 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-white/80 transition">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <span class="text-blue-600 text-xs font-bold">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                            </div>
+                            <div class="hidden md:block">
+                                <p class="text-sm font-semibold text-gray-700 leading-tight">{{ auth()->user()->name }}</p>
+                                <p class="text-[11px] text-gray-400 leading-tight">Employee</p>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-400 text-[10px] ml-1"></i>
                         </div>
-                        <div class="hidden md:block">
-                            <p class="text-sm font-semibold text-gray-700 leading-tight">Admin</p>
-                            <p class="text-[11px] text-gray-400 leading-tight">Administrator</p>
+                    @else
+                        <!-- Admin Avatar -->
+                        <div class="flex items-center gap-3 ml-2 bg-white/60 border border-gray-200/50 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-white/80 transition">
+                            <div class="w-8 h-8 
+                            @if(auth()->user() && auth()->user()->role === 'admin')
+                                bg-indigo-100
+                            @else
+                                bg-red-100
+                            @endif
+                            rounded-lg flex items-center justify-center">
+                                <span class="
+                                @if(auth()->user() && auth()->user()->role === 'admin')
+                                    text-indigo-600
+                                @else
+                                    text-red-600
+                                @endif
+                                text-xs font-bold">{{ substr(auth()->user()->name ?? 'U', 0, 1) }}</span>
+                            </div>
+                            <div class="hidden md:block">
+                                <p class="text-sm font-semibold text-gray-700 leading-tight">{{ auth()->user()->name ?? 'User' }}</p>
+                                <p class="text-[11px] text-gray-400 leading-tight">
+                                @if(auth()->user() && auth()->user()->role === 'admin')
+                                    Administrator
+                                @else
+                                    Super Admin
+                                @endif
+                                </p>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-400 text-[10px] ml-1"></i>
                         </div>
-                        <i class="fas fa-chevron-down text-gray-400 text-[10px] ml-1"></i>
-                    </div>
+                    @endif
                 </div>
             </header>
 

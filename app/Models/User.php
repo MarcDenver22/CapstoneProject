@@ -22,6 +22,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'faculty_id',
+        'position',
+        'department_id',
+        'face_encodings',
+        'face_enrolled',
+        'face_samples_count',
+        'face_enrolled_at',
     ];
 
     /**
@@ -45,5 +53,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the department associated with this user
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,11 +14,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Seed departments first (only if not already seeded)
+        if (\App\Models\Department::count() === 0) {
+            $this->call(DepartmentSeeder::class);
+        }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Seed test users
+        $this->call(UserSeeder::class);
+
+        // Note: Users are created through registration, not seeding
+        // This ensures only registered users exist in the system
+        
+        // Clear audit logs to start fresh
+        \App\Models\AuditLog::query()->delete();
+        
+        // Clear attendance records to start fresh
+        \App\Models\Attendance::query()->delete();
     }
 }

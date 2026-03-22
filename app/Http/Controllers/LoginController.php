@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\AuditLogger;
 
 class LoginController extends Controller
 {
@@ -22,7 +23,25 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            return redirect()->intended(route('dashboard'));
+            // Log the login action
+            AuditLogger::log('login', 'User', Auth::id(), [
+                'email' => Auth::user()->email,
+                'role' => Auth::user()->role,
+            ]);
+
+            if (Auth::user()->role === 'employee') {
+                return redirect()->route('employee.dashboard');
+            }
+
+            if (Auth::user()->role === 'hr') {
+                return redirect()->route('hr.dashboard');
+            }
+
+            if (Auth::user()->role === 'super_admin') {
+                return redirect()->route('super_admin.dashboard');
+            }
+
+            return redirect()->route('dashboard');
         }
 
         return back()->withErrors([
@@ -32,6 +51,14 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        // Log the logout action before destroying the session
+        if (Auth::check()) {
+            AuditLogger::log('logout', 'User', Auth::id(), [
+                'email' => Auth::user()->email,
+                'role' => Auth::user()->role,
+            ]);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();
