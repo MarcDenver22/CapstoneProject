@@ -16,9 +16,9 @@ class UserSeeder extends Seeder
     {
         // Create a Super Admin user for testing
         User::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@test.com',
-            'password' => Hash::make('password123'),
+            'name' => 'Marc Denver Riturban',
+            'email' => '22ur0749@psu.edu.ph',
+            'password' => Hash::make('fernandez2003'),
             'role' => 'super_admin',
             'email_verified_at' => now(),
         ]);
@@ -26,8 +26,8 @@ class UserSeeder extends Seeder
         // Create an Admin user for testing
         User::create([
             'name' => 'Admin User',
-            'email' => 'admin2@test.com',
-            'password' => Hash::make('password123'),
+            'email' => 'admin@gmail.com',
+            'password' => Hash::make('password'),
             'role' => 'admin',
             'email_verified_at' => now(),
         ]);

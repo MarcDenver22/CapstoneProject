@@ -131,7 +131,7 @@
             </div>
 
             <!-- Navigation Sections -->
-            <nav class="flex-1 space-y-6">
+            <nav class="overflow-y-auto space-y-6">
 
                 <!-- MY ACCOUNT Section -->
                 <div>
@@ -141,11 +141,6 @@
                         <a href="{{ route('employee.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group @yield('nav-dashboard')">
                             <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Dashboard</span>
-                        </a>
-                        <!-- My DTR -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
-                            <i class="fas fa-calendar-alt w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">My DTR</span>
                         </a>
                         <!-- Attendance History -->
                         <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
@@ -157,42 +152,20 @@
                             <i class="fas fa-calendar-times w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Leave Requests</span>
                         </a>
-                    </div>
-                </div>
-
-                <!-- INFO Section -->
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Info</p>
-                    <div class="space-y-1">
-                        <!-- Print DTR -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
-                            <i class="fas fa-print w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">Print DTR</span>
-                        </a>
-                        <!-- Leave Summary -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
-                            <i class="fas fa-sticky-note w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">Leave Summary</span>
+                        <!-- Profile -->
+                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Profile</span>
                         </a>
                     </div>
                 </div>
 
             </nav>
 
-            <!-- Bottom: Profile -->
+            <!-- Bottom: Profile Section -->
             <div class="mt-auto border-t border-gray-200 pt-4">
-                <div class="flex items-center gap-3 px-3 py-3 bg-indigo-50 rounded-lg cursor-pointer hover:bg-indigo-100 transition">
-                    <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span class="text-white font-bold text-sm">AC</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name ?? 'Employee' }}</p>
-                        <p class="text-xs text-gray-500 truncate">Registrar Staff</p>
-                    </div>
-                </div>
-
                 <!-- Logout -->
-                <form method="POST" action="{{ route('logout') }}" class="mt-3">
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
                     @csrf
                     <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition group">
                         <i class="fas fa-sign-out-alt w-5 text-center"></i>
@@ -215,7 +188,7 @@
                 <div class="flex items-center gap-4">
                     <!-- Face Enrollment Button -->
                     @if (!auth()->user()->face_enrolled)
-                    <a href="{{ route('face.enrollment') }}" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-sm font-medium rounded-lg transition shadow-sm">
+                    <a href="{{ route('employee.face_enrollment.show') }}" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-sm font-medium rounded-lg transition shadow-sm">
                         <i class="fas fa-face-smile"></i>
                         <span>Enroll Face</span>
                     </a>
@@ -226,19 +199,6 @@
                     </div>
                     @endif
 
-                    <!-- Employee dropdown -->
-                    <div class="flex items-center gap-3 ml-2 bg-white/60 border border-gray-200/50 rounded-xl px-3 py-2 cursor-pointer hover:bg-white/80 transition">
-                        <div class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name ?? 'E', 0, 1) }}</span>
-                        </div>
-                        <div class="hidden md:block">
-                            <p class="text-sm font-semibold text-gray-700 leading-tight">{{ auth()->user()->name ?? 'Employee' }}</p>
-                            <p class="text-[11px] text-gray-500 leading-tight">Employee</p>
-                        </div>
-                        <i class="fas fa-chevron-down text-gray-400 text-[10px] ml-1"></i>
-                    </div>
-
-                  
                 </div>
             </header>
 

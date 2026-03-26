@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EmployeesController;
 use App\Http\Controllers\Admin\EventController;
@@ -18,7 +19,8 @@ use App\Http\Controllers\HR\ReportController as HRReportController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login');
+// Landing page route
+Route::get('/', [LandingPageController::class, 'index'])->name('landing');
 
 // Auth routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -42,6 +44,11 @@ Route::middleware('auth')->group(function () {
     // Employee Dashboard
     Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
     Route::get('/employee/attendance-history', [EmployeeDashboardController::class, 'attendanceHistory'])->name('employee.attendance-history');
+    Route::get('/employee/attendance-history/export-pdf', [EmployeeDashboardController::class, 'exportHistoryPdf'])->name('employee.attendance-history.export-pdf');
+    
+    // Employee Profile
+    Route::get('/employee/profile/edit', [EmployeeDashboardController::class, 'editProfile'])->name('employee.profile.edit');
+    Route::put('/employee/profile', [EmployeeDashboardController::class, 'updateProfile'])->name('employee.profile.update');
     
     // Employee Leave Requests
     Route::prefix('/employee/leave-requests')->group(function () {
@@ -142,6 +149,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/hr/reports/per-department', [HRReportController::class, 'perDepartment'])->name('hr.reports.per-department');
         Route::get('/hr/reports/export-csv', [HRReportController::class, 'exportCsv'])->name('hr.reports.export-csv');
         Route::get('/hr/reports/export-pdf', [HRReportController::class, 'exportPdf'])->name('hr.reports.export-pdf');
+        Route::get('/hr/dtr', [HRReportController::class, 'dtrExportPage'])->name('hr.dtr.page');
+        Route::get('/hr/dtr/export-pdf', [HRReportController::class, 'exportDtrPdf'])->name('hr.dtr.export-pdf');
     });
     
     // Super Admin routes

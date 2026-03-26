@@ -16,46 +16,46 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
 
     <!-- Total Employees -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-users text-blue-600 text-xl"></i>
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex items-center gap-4 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
+        <div class="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-blue-200 transition">
+            <i class="fas fa-users text-blue-600 text-2xl"></i>
         </div>
         <div>
-            <p class="text-sm text-gray-500 font-medium">Total Employees</p>
-            <p class="text-2xl font-bold text-gray-800">{{ $totalEmployees ?? 0 }}</p>
+            <p class="text-sm text-gray-500 font-semibold uppercase tracking-wide">Total Employees</p>
+            <p class="text-3xl font-bold text-gray-800 mt-1">{{ $totalEmployees ?? 0 }}</p>
         </div>
     </div>
 
     <!-- Present Today -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-user-check text-green-600 text-xl"></i>
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex items-center gap-4 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
+        <div class="w-14 h-14 bg-gradient-to-br from-green-100 to-green-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-green-200 transition">
+            <i class="fas fa-user-check text-green-600 text-2xl"></i>
         </div>
         <div>
-            <p class="text-sm text-gray-500 font-medium">Present Today</p>
-            <p class="text-2xl font-bold text-gray-800">{{ $presentToday ?? 0 }}</p>
+            <p class="text-sm text-gray-500 font-semibold uppercase tracking-wide">Present Today</p>
+            <p class="text-3xl font-bold text-green-600 mt-1">{{ $presentToday ?? 0 }}</p>
         </div>
     </div>
 
     <!-- Absent Today -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-user-times text-red-600 text-xl"></i>
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex items-center gap-4 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
+        <div class="w-14 h-14 bg-gradient-to-br from-red-100 to-red-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-red-200 transition">
+            <i class="fas fa-user-times text-red-600 text-2xl"></i>
         </div>
         <div>
-            <p class="text-sm text-gray-500 font-medium">Absent Today</p>
-            <p class="text-2xl font-bold text-gray-800">{{ $absentToday ?? 0 }}</p>
+            <p class="text-sm text-gray-500 font-semibold uppercase tracking-wide">Absent Today</p>
+            <p class="text-3xl font-bold text-red-600 mt-1">{{ $absentToday ?? 0 }}</p>
         </div>
     </div>
 
     <!-- Late Arrivals -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex items-center gap-4 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
+        <div class="w-14 h-14 bg-gradient-to-br from-yellow-100 to-yellow-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:from-yellow-200 transition">
+            <i class="fas fa-clock text-yellow-600 text-2xl"></i>
         </div>
         <div>
-            <p class="text-sm text-gray-500 font-medium">Late Arrivals</p>
-            <p class="text-2xl font-bold text-gray-800">{{ $lateArrivals ?? 0 }}</p>
+            <p class="text-sm text-gray-500 font-semibold uppercase tracking-wide">Late Arrivals</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-1">{{ $lateArrivals ?? 0 }}</p>
         </div>
     </div>
 
@@ -67,103 +67,123 @@
     <div class="lg:col-span-2 space-y-6">
         
         <!-- Weekly Attendance Overview -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h2 class="text-lg font-bold text-gray-800">Weekly Attendance Overview</h2>
-                    <p class="text-sm text-gray-500">This week: Present / Late / Absent</p>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300">
+            <div class="bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 px-8 py-6 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white opacity-5 rounded-full -mr-20 -mt-20"></div>
+                <div class="relative z-10 flex justify-between items-center">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fas fa-chart-bar text-white text-xl"></i>
+                            <h2 class="text-2xl font-bold text-white">Weekly Attendance Overview</h2>
+                        </div>
+                        <p class="text-blue-100 text-sm">This week: Present / Late / Absent</p>
+                    </div>
+                    <a href="#" class="px-4 py-2 bg-white bg-opacity-20 text-white text-sm font-bold rounded-lg hover:bg-opacity-30 transition backdrop-blur-sm ring-1 ring-white ring-opacity-30">
+                        <i class="fas fa-download mr-2"></i>Export CSV
+                    </a>
                 </div>
-                <a href="#" class="text-blue-600 text-sm font-semibold hover:underline">Export CSV</a>
             </div>
             
             <!-- Attendance Chart -->
-            <div class="flex items-end justify-around h-48 gap-4 mb-6">
-                {{-- Chart data will be populated dynamically --}}
-                <p class="text-gray-500 text-center w-full py-24">No attendance data available yet</p>
-            </div>
-            
-            <!-- Legend -->
-            <div class="flex justify-center gap-8 pt-4 border-t border-gray-200">
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 bg-emerald-500 rounded"></div>
-                    <span class="text-sm text-gray-600">Present</span>
+            <div class="p-6">
+                <div class="flex items-end justify-around h-48 gap-4 mb-6">
+                    {{-- Chart data will be populated dynamically --}}
+                    <p class="text-gray-500 text-center w-full py-24">No attendance data available yet</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 bg-yellow-400 rounded"></div>
-                    <span class="text-sm text-gray-600">Late</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 bg-red-500 rounded"></div>
-                    <span class="text-sm text-gray-600">Absent</span>
+                
+                <!-- Legend -->
+                <div class="flex justify-center gap-8 pt-6 border-t border-gray-200">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
+                        <span class="text-sm text-gray-600 font-medium">Present</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-yellow-400 rounded-full"></div>
+                        <span class="text-sm text-gray-600 font-medium">Late</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                        <span class="text-sm text-gray-600 font-medium">Absent</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Today's Attendance Log -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <h2 class="text-lg font-bold text-gray-800">Today's Attendance Log</h2>
-                    <p class="text-xs text-gray-500">Read-only - No direct editing permitted</p>
-                </div>
-                <div class="relative">
-                    <input type="text" placeholder="Search employee..." class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300">
+            <div class="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 px-8 py-6 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white opacity-5 rounded-full -mr-20 -mt-20"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i class="fas fa-list text-white text-xl"></i>
+                        <h2 class="text-2xl font-bold text-white">Today's Attendance Log</h2>
+                    </div>
+                    <p class="text-indigo-100 text-sm">Read-only - No direct editing permitted</p>
                 </div>
             </div>
             
-            <!-- Attendance Table -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-gray-300 bg-gray-50">
-                            <th class="text-left py-3 px-4 font-semibold text-gray-700">EMPLOYEE</th>
-                            <th class="text-left py-3 px-4 font-semibold text-gray-700">DEPT.</th>
-                            <th class="text-left py-3 px-4 font-semibold text-gray-700">TIME-IN</th>
-                            <th class="text-left py-3 px-4 font-semibold text-gray-700">TIME-OUT</th>
-                            <th class="text-left py-3 px-4 font-semibold text-gray-700">STATUS</th>
-                            <th class="text-left py-3 px-4 font-semibold text-gray-700">LIVENESS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($todayAttendance as $record)
-                            <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                <td class="py-3 px-4 font-medium text-gray-900">{{ $record->user->name }}</td>
-                                <td class="py-3 px-4 text-gray-600">{{ $record->user->department_name ?? 'N/A' }}</td>
-                                <td class="py-3 px-4 text-gray-600">
-                                    @if($record->time_in)
-                                        {{ $record->time_in->format('H:i') }}
-                                    @else
-                                        <span class="text-gray-400">—</span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-4 text-gray-600">
-                                    @if($record->time_out)
-                                        {{ $record->time_out->format('H:i') }}
-                                    @else
-                                        <span class="text-gray-400">—</span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-4">
-                                    <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold {{ $record->getStatusBadgeClass() }}">
-                                        {{ ucfirst(str_replace('_', ' ', $record->status)) }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    @if($record->liveness_verified)
-                                        <span class="text-green-600 font-semibold">✓</span>
-                                    @else
-                                        <span class="text-red-600 font-semibold">✕</span>
-                                    @endif
-                                </td>
+            <div class="p-6">
+                <div class="relative mb-4">
+                    <input type="text" placeholder="Search employee..." class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                    <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                </div>
+                
+                <!-- Attendance Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b-2 border-indigo-300 bg-gradient-to-r from-indigo-50 to-purple-50">
+                                <th class="text-left py-4 px-4 font-bold text-gray-800">EMPLOYEE</th>
+                                <th class="text-left py-4 px-4 font-bold text-gray-800">DEPT.</th>
+                                <th class="text-left py-4 px-4 font-bold text-gray-800">TIME-IN</th>
+                                <th class="text-left py-4 px-4 font-bold text-gray-800">TIME-OUT</th>
+                                <th class="text-left py-4 px-4 font-bold text-gray-800">STATUS</th>
+                                <th class="text-center py-4 px-4 font-bold text-gray-800">LIVENESS</th>
                             </tr>
-                        @empty
-                            <tr class="border-b border-gray-200 text-center">
-                                <td colspan="6" class="py-8 text-gray-500">No attendance records to display</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse($todayAttendance as $record)
+                                <tr class="border-b border-gray-100 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-150">
+                                    <td class="py-3 px-4 font-semibold text-gray-900">{{ $record->user->name }}</td>
+                                    <td class="py-3 px-4 text-gray-600">{{ $record->user->department_name ?? 'N/A' }}</td>
+                                    <td class="py-3 px-4 text-gray-600 font-medium">
+                                        @if($record->time_in)
+                                            {{ $record->time_in->format('H:i') }}
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-4 text-gray-600 font-medium">
+                                        @if($record->time_out)
+                                            {{ $record->time_out->format('H:i') }}
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ring-1 {{ $record->getStatusBadgeClass() }}">
+                                            {{ ucfirst(str_replace('_', ' ', $record->status)) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        @if($record->liveness_verified)
+                                            <span class="text-green-600 font-bold text-lg">✓</span>
+                                        @else
+                                            <span class="text-red-600 font-bold text-lg">✕</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr class="border-b border-gray-100">
+                                    <td colspan="6" class="py-12 text-center text-gray-500">
+                                        <i class="fas fa-inbox text-4xl text-gray-300 mb-3 block"></i>
+                                        <p class="font-medium">No attendance records to display</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

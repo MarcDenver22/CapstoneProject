@@ -15,8 +15,8 @@
             @endif
         </div>
         <div class="flex gap-3">
-            <a href="{{ route('hr.reports.export-csv', array_merge(request()->query(), ['type' => 'monthly'])) }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2">
-                <i class="fas fa-download"></i>Export CSV
+            <a href="{{ route('hr.reports.export-pdf', array_merge(request()->query(), ['type' => 'monthly'])) }}" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center gap-2">
+                <i class="fas fa-file-pdf"></i>Export PDF
             </a>
             <a href="{{ route('hr.reports.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center gap-2">
                 <i class="fas fa-arrow-left"></i>Back

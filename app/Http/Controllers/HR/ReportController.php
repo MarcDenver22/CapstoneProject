@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -265,7 +266,7 @@ class ReportController extends Controller
         $data = $this->getReportData($request, $type);
 
         // Log the export action
-        $this->auditLogger->log(Auth::id(), 'export', 'attendance_report', [
+        AuditLogger::log('export', 'attendance_report', Auth::id(), [
             'type' => $type,
             'filters' => $request->except(['type', 'export']),
             'file' => $fileName,
@@ -292,7 +293,7 @@ class ReportController extends Controller
         $fileName = "attendance_report_{$type}_" . now()->format('Y-m-d_H-i-s') . '.pdf';
 
         // Log the export action
-        $this->auditLogger->log(Auth::id(), 'export', 'attendance_report', [
+        AuditLogger::log('export', 'attendance_report', Auth::id(), [
             'type' => $type,
             'filters' => $request->except(['type', 'export']),
             'file' => $fileName,
@@ -487,4 +488,90 @@ class ReportController extends Controller
         $totalRate = $employeeSummary->sum('attendance_rate');
         return round($totalRate / count($employeeSummary), 2);
     }
+
+    /**
+     * Show DTR export page
+     */
+    public function dtrExportPage()
+    {
+        $employees = User::whereIn('role', ['employee', 'hr'])->orderBy('name')->get();
+        return view('hr.dtr-export', compact('employees'));
+    }
+
+    /**
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2020',
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+        $month = $request->month;
+        $year = $request->year;
+
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+
+        $records = Attendance::where('user_id', $user->id)
+            ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->get();
+
+        $fileName = "DTR_{$user->name}_{$month}_{$year}.xlsx";
+
+        // Log the export action
+        AuditLogger::log('export', 'dtr_excel', Auth::id(), [
+            'user_id' => $user->id,
+            'month' => $month,
+            'year' => $year,
+            'file' => $fileName,
+        ]);
+
+        return (new \App\Exports\DtrExport($records, $user, $month, $year))->download($fileName);
+    }
+
+    /**
+     * Export DTR as PDF (Civil Service Format)
+     */
+    public function exportDtrPdf(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2020',
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+        $month = $request->month;
+        $year = $request->year;
+
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+
+        $records = Attendance::where('user_id', $user->id)
+            ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->get();
+
+        $fileName = "DTR_{$user->name}_{$month}_{$year}.pdf";
+
+        // Log the export action
+        AuditLogger::log('export', 'dtr_pdf', Auth::id(), [
+            'user_id' => $user->id,
+            'month' => $month,
+            'year' => $year,
+            'file' => $fileName,
+        ]);
+
+        $html = (new \App\Exports\DtrPdfExport($records, $user, $month, $year))->generate();
+
+        return Pdf::loadHTML($html)
+            ->setPaper('a4')
+            ->setOption('margin-top', 0.5)
+            ->setOption('margin-bottom', 0.5)
+            ->setOption('margin-left', 0.5)
+            ->setOption('margin-right', 0.5)
+            ->download($fileName);
+    }
+
+
 }

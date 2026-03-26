@@ -148,7 +148,7 @@
             </div>
 
             <!-- Navigation Sections -->
-            <nav class="flex-1 space-y-6">
+            <nav class="overflow-y-auto space-y-6">
 
                 <!-- EMPLOYEE SECTION (for employees and non-HR users) -->
                 @if(auth()->user() && auth()->user()->role === 'employee')
@@ -160,11 +160,6 @@
                             <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
                             <span class="text-sm font-medium">Dashboard</span>
                         </a>
-                        <!-- My DTR -->
-                        <a href="{{ route('employee.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
-                            <i class="fas fa-file-alt w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
-                            <span class="text-sm font-medium">My DTR</span>
-                        </a>
                         <!-- Attendance History -->
                         <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
                             <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
@@ -174,6 +169,11 @@
                         <a href="{{ route('employee.leave-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
                             <i class="fas fa-calendar-times w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
                             <span class="text-sm font-medium">Leave Requests</span>
+                        </a>
+                        <!-- Profile -->
+                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                            <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
+                            <span class="text-sm font-medium">Profile</span>
                         </a>
                     </div>
                 </div>
@@ -189,11 +189,6 @@
                             <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Dashboard</span>
                         </a>
-                        <!-- My DTR -->
-                        <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
-                            <i class="fas fa-file-alt w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
-                            <span class="text-sm font-medium">My DTR</span>
-                        </a>
                         <!-- Attendance History -->
                         <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
                             <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
@@ -204,16 +199,10 @@
                             <i class="fas fa-calendar-times w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Leave Requests</span>
                         </a>
-                    </div>
-                </div>
-
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Info</p>
-                    <div class="space-y-1">
-                        <!-- Print DTR -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
-                            <i class="fas fa-print w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
-                            <span class="text-sm font-medium">Print DTR</span>
+                        <!-- Profile -->
+                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                            <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
+                            <span class="text-sm font-medium">Profile</span>
                         </a>
                     </div>
                 </div>
@@ -223,7 +212,7 @@
                     <div class="space-y-1">
                         <!-- Reports -->
                         <a href="{{ route('hr.reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
-                            <i class="fas fa-file-chart-line w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
+                            <i class="fas fa-chart-bar w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Attendance Reports</span>
                         </a>
                         <!-- Campus Updates -->
@@ -265,10 +254,17 @@
                             <i class="fas fa-heartbeat w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">System Health</span>
                         </a>
+                        <!-- Profile -->
+                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                            <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-red-600"></i>
+                            <span class="text-sm font-medium">Profile</span>
+                        </a>
                     </div>
                 </div>
+                @endif
 
                 <!-- ADMIN MANAGEMENT (Super Admin can also do everything Admin does) -->
+                @if(auth()->user() && auth()->user()->role === 'super_admin')
                 <div>
                     <p class="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3 px-2">Admin Management</p>
                     <div class="space-y-1">
@@ -333,6 +329,11 @@
                             <i class="fas fa-calendar-check w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Attendance Log</span>
                         </a>
+                        <!-- Profile -->
+                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Profile</span>
+                        </a>
                     </div>
                 </div>
 
@@ -380,38 +381,6 @@
 
             <!-- Bottom: Profile -->
             <div class="mt-auto border-t border-gray-200 pt-4">
-                @if(auth()->user() && auth()->user()->role === 'employee')
-                    <div class="flex items-center gap-3 px-3 py-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition">
-                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                            <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
-                            <p class="text-xs text-gray-500 truncate">{{ auth()->user()->role === 'employee' ? 'Employee' : (auth()->user()->role === 'hr' ? 'HR' : ucfirst(auth()->user()->role)) }}</p>
-                        </div>
-                    </div>
-                @elseif(auth()->user() && auth()->user()->role === 'admin')
-                    <div class="flex items-center gap-3 px-3 py-3 bg-indigo-50 rounded-lg cursor-pointer hover:bg-indigo-100 transition">
-                        <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
-                            <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
-                            <p class="text-xs text-gray-500 truncate">Administrator</p>
-                        </div>
-                    </div>
-                @elseif(auth()->user() && auth()->user()->role === 'super_admin')
-                    <div class="flex items-center gap-3 px-3 py-3 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition">
-                        <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                            <span class="text-white font-bold text-sm">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
-                            <p class="text-xs text-gray-500 truncate">Super Admin</p>
-                        </div>
-                    </div>
-                @endif
-
                 <!-- Logout -->
                 <form method="POST" action="{{ route('logout') }}" class="mt-3">
                     @csrf
@@ -439,48 +408,6 @@
                         <a href="{{ route('employee.face_enrollment.show') }}" class="px-4 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm transition flex items-center gap-2">
                             <i class="fas fa-camera"></i> Enroll Face
                         </a>
-
-                        <!-- Employee Avatar -->
-                        <div class="flex items-center gap-3 ml-2 bg-white/60 border border-gray-200/50 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-white/80 transition">
-                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <span class="text-blue-600 text-xs font-bold">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                            </div>
-                            <div class="hidden md:block">
-                                <p class="text-sm font-semibold text-gray-700 leading-tight">{{ auth()->user()->name }}</p>
-                                <p class="text-[11px] text-gray-400 leading-tight">Employee</p>
-                            </div>
-                            <i class="fas fa-chevron-down text-gray-400 text-[10px] ml-1"></i>
-                        </div>
-                    @else
-                        <!-- Admin Avatar -->
-                        <div class="flex items-center gap-3 ml-2 bg-white/60 border border-gray-200/50 rounded-xl px-3 py-1.5 cursor-pointer hover:bg-white/80 transition">
-                            <div class="w-8 h-8 
-                            @if(auth()->user() && auth()->user()->role === 'admin')
-                                bg-indigo-100
-                            @else
-                                bg-red-100
-                            @endif
-                            rounded-lg flex items-center justify-center">
-                                <span class="
-                                @if(auth()->user() && auth()->user()->role === 'admin')
-                                    text-indigo-600
-                                @else
-                                    text-red-600
-                                @endif
-                                text-xs font-bold">{{ substr(auth()->user()->name ?? 'U', 0, 1) }}</span>
-                            </div>
-                            <div class="hidden md:block">
-                                <p class="text-sm font-semibold text-gray-700 leading-tight">{{ auth()->user()->name ?? 'User' }}</p>
-                                <p class="text-[11px] text-gray-400 leading-tight">
-                                @if(auth()->user() && auth()->user()->role === 'admin')
-                                    Administrator
-                                @else
-                                    Super Admin
-                                @endif
-                                </p>
-                            </div>
-                            <i class="fas fa-chevron-down text-gray-400 text-[10px] ml-1"></i>
-                        </div>
                     @endif
                 </div>
             </header>
