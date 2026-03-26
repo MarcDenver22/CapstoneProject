@@ -211,6 +211,10 @@
                 </tr>
                 </thead>
                 <tbody>
+                @php
+                    $secondColTotalHours = 0;
+                    $secondColTotalMinutes = 0;
+                @endphp
                 @for ($day = 1; $day <= 31; $day++)
                     @php
                         $record = isset($daysData[$day]) ? (object)$daysData[$day] : null;
@@ -220,6 +224,15 @@
                         $pmOut = $record?->pm_depart ?? '';
                         $utHours = $record?->undertime_hours ?? '';
                         $utMinutes = $record?->undertime_minutes ?? '';
+
+                        if ($utHours !== '' && $utMinutes !== '') {
+                            $secondColTotalHours += intval($utHours);
+                            $secondColTotalMinutes += intval($utMinutes);
+                            if ($secondColTotalMinutes >= 60) {
+                                $secondColTotalHours += intdiv($secondColTotalMinutes, 60);
+                                $secondColTotalMinutes = $secondColTotalMinutes % 60;
+                            }
+                        }
                     @endphp
                     <tr>
                         <td>{{ $day }}</td>
@@ -234,8 +247,8 @@
 
                 <tr class="total-row">
                     <td colspan="5">Total</td>
-                    <td>{{ $totalHours }}</td>
-                    <td>{{ $totalMinutes }}</td>
+                    <td>{{ $secondColTotalHours }}</td>
+                    <td>{{ $secondColTotalMinutes }}</td>
                 </tr>
                 </tbody>
             </table>

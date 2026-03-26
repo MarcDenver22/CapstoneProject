@@ -13,7 +13,7 @@ A complete DTR export system has been implemented with support for **Excel** and
 
 #### Export Classes
 - **`App\Exports\DtrExport`** - Handles Excel export with proper formatting
-- **`App\Exports\DtrPdfExport`** - Handles PDF data preparation
+- **`App\Exports\DtrExport`** - Handles PDF data preparation
 
 #### Controller Methods (ReportController)
 - **`dtrExportPage()`** - Shows DTR export interface
@@ -31,7 +31,7 @@ A complete DTR export system has been implemented with support for **Excel** and
   - Usage instructions
 
 #### PDF Template
-- **`resources/views/exports/dtr-pdf.blade.php`** - Professional DTR PDF layout with:
+- **`resources/views/exports/dtr-export.blade.php`** - Professional DTR PDF layout with:
   - Header (Civil Service Form No. 48)
   - Employee information section
   - Detailed DTR table with borders
@@ -154,7 +154,7 @@ Access in: **Admin** → **Audit Logs** → Filter by "export"
 ## Customization Options
 
 ### To change office hours:
-Edit: `resources/views/exports/dtr-pdf.blade.php`
+Edit: `resources/views/exports/dtr-export.blade.php`
 ```blade
 <div class="info-value">8:00 AM - 5:00 PM</div>
 ```

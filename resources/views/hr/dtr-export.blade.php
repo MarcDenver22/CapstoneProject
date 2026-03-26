@@ -51,6 +51,9 @@
                 <h3 class="text-xl font-bold text-gray-800 mb-6">Export Options</h3>
                 
                 <div class="space-y-3">
+                    <button type="button" onclick="printDtr()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold flex items-center justify-center gap-2">
+                        <i class="fas fa-print"></i> Print DTR
+                    </button>
                     <button type="button" onclick="exportDtr('pdf')" class="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-semibold flex items-center justify-center gap-2">
                         <i class="fas fa-file-pdf"></i> Export as PDF
                     </button>
@@ -132,6 +135,35 @@ function exportDtr(format) {
         : "{{ route('hr.dtr.export-pdf') }}";
 
     window.location.href = route + '?' + params.toString();
+}
+
+function printDtr() {
+    const form = document.getElementById('dtrForm');
+    const formData = new FormData(form);
+
+    // Validate form
+    if (!formData.get('user_id') || !formData.get('month') || !formData.get('year')) {
+        alert('Please select employee, month, and year');
+        return;
+    }
+
+    // Create a hidden iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    
+    const params = new URLSearchParams(formData);
+    iframe.src = '{{ route('hr.dtr.print') }}?' + params.toString();
+    document.body.appendChild(iframe);
+    
+    iframe.onload = function() {
+        // Trigger print on the iframe content
+        iframe.contentWindow.print();
+        
+        // Remove the iframe after a short delay to ensure print dialog opens
+        setTimeout(() => {
+            document.body.removeChild(iframe);
+        }, 1000);
+    };
 }
 </script>
 @endsection

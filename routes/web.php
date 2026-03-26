@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
     Route::get('/employee/attendance-history', [EmployeeDashboardController::class, 'attendanceHistory'])->name('employee.attendance-history');
     Route::get('/employee/attendance-history/export-pdf', [EmployeeDashboardController::class, 'exportHistoryPdf'])->name('employee.attendance-history.export-pdf');
+    Route::get('/employee/attendance-history/print', [EmployeeDashboardController::class, 'printHistoryPdf'])->name('employee.attendance-history.print');
     
     // Employee Profile
     Route::get('/employee/profile/edit', [EmployeeDashboardController::class, 'editProfile'])->name('employee.profile.edit');
@@ -151,6 +152,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/hr/reports/export-pdf', [HRReportController::class, 'exportPdf'])->name('hr.reports.export-pdf');
         Route::get('/hr/dtr', [HRReportController::class, 'dtrExportPage'])->name('hr.dtr.page');
         Route::get('/hr/dtr/export-pdf', [HRReportController::class, 'exportDtrPdf'])->name('hr.dtr.export-pdf');
+        Route::get('/hr/dtr/print', [HRReportController::class, 'printDtrPdf'])->name('hr.dtr.print');
     });
     
     // Super Admin routes

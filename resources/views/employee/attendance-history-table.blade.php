@@ -5,7 +5,7 @@
 
 @section('content')
 
-<div class="space-y-6">
+<div class="space-y-6 screen-only">
     <!-- Header Section -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <div class="text-center mb-6">
@@ -97,36 +97,35 @@
         </div>
     </div>
 
-    <!-- Export & Print Buttons -->
+    <!-- Export and Print Buttons -->
     <div class="flex gap-3 justify-end no-print">
+        <button onclick="printDTR()" class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition inline-flex items-center gap-2 shadow-sm">
+            <i class="fas fa-print"></i> Print DTR
+        </button>
         <a href="{{ route('employee.attendance-history.export-pdf') }}" class="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition inline-flex items-center gap-2 shadow-sm">
             <i class="fas fa-file-pdf"></i> Export DTR
         </a>
-        <button onclick="window.print()" class="px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold transition inline-flex items-center gap-2 shadow-sm">
-            <i class="fas fa-print"></i> Print
-        </button>
     </div>
-</div>
 
-<style>
-    @media print {
-        body {
-            background-color: white;
-            padding: 0;
-            margin: 0;
+    <script>
+        function printDTR() {
+            // Create a hidden iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = '{{ route('employee.attendance-history.print') }}';
+            document.body.appendChild(iframe);
+            
+            iframe.onload = function() {
+                // Trigger print on the iframe content
+                iframe.contentWindow.print();
+                
+                // Remove the iframe after a short delay to ensure print dialog opens
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            };
         }
-        .no-print {
-            display: none !important;
-        }
-        .bg-white {
-            box-shadow: none;
-            border: none;
-            page-break-inside: avoid;
-        }
-        .container {
-            max-width: 100%;
-        }
-    }
-</style>
+    </script>
+</div>
 
 @endsection

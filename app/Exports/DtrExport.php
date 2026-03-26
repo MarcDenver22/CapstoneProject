@@ -5,7 +5,7 @@ namespace App\Exports;
 use Illuminate\Support\Facades\View;
 use Carbon\Carbon;
 
-class DtrPdfExport
+class DtrExport
 {
     protected $records;
     protected $user;
@@ -96,7 +96,7 @@ class DtrPdfExport
         $totalHours = intdiv($totalUnderTimeMinutes, 60);
         $totalMinutes = $totalUnderTimeMinutes % 60;
 
-        return View::make('exports.dtr-pdf', [
+        return View::make('exports.dtr-export', [
             'user' => $this->user,
             'daysData' => $daysData,
             'month' => $this->month,

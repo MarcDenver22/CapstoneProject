@@ -419,7 +419,7 @@ class DashboardController extends Controller
         $fileName = "Attendance_History_{$user->name}_" . now()->format('Y-m-d_H-i-s') . '.pdf';
 
         // Generate the HTML from the view
-        $html = view('exports.attendance-history-pdf', [
+        $html = view('exports.attendance-history-export', [
             'user' => $user,
             'attendanceRecords' => $attendanceRecords,
             'daysData' => $daysData,
@@ -435,6 +435,103 @@ class DashboardController extends Controller
             ->setOption('margin-left', 0.5)
             ->setOption('margin-right', 0.5)
             ->download($fileName);
+    }
+
+    /**
+     * Print the attendance history in DTR format
+     */
+    public function printHistoryPdf()
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        // Get all attendance records for the current month
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+        
+        $attendanceRecords = Attendance::where('user_id', $user->id)
+            ->whereYear('attendance_date', $currentYear)
+            ->whereMonth('attendance_date', $currentMonth)
+            ->orderBy('attendance_date', 'asc')
+            ->get();
+
+        // Process attendance records into structured daily data
+        $daysData = [];
+        $totalHours = 0;
+        $totalMinutes = 0;
+
+        // Group records by day
+        $recordsByDay = $attendanceRecords->groupBy(function($record) {
+            return \Carbon\Carbon::parse($record->attendance_date)->day;
+        });
+
+        // Process each day (1-31)
+        for ($day = 1; $day <= 31; $day++) {
+            $dayRecords = $recordsByDay->get($day);
+            $daysData[$day] = [];
+
+            if ($dayRecords && $dayRecords->count() > 0) {
+                // Get the first and last record for the day
+                $firstRecord = $dayRecords->first();
+                $lastRecord = $dayRecords->last();
+
+                // A.M. Arrival (first time_in of the day, or default 08:00)
+                if ($firstRecord->time_in) {
+                    $timeIn = \Carbon\Carbon::parse($firstRecord->time_in);
+                    $daysData[$day]['am_arrival'] = $timeIn->format('H:i');
+                } else {
+                    $daysData[$day]['am_arrival'] = '08:00';
+                }
+
+                // A.M. Departure (noon - 12:00)
+                $daysData[$day]['am_depart'] = '12:00';
+
+                // P.M. Arrival (afternoon - 13:00)
+                $daysData[$day]['pm_arrival'] = '13:00';
+
+                // P.M. Departure (last time_out of the day, or default 17:00)
+                if ($lastRecord->time_out) {
+                    $timeOut = \Carbon\Carbon::parse($lastRecord->time_out);
+                    $daysData[$day]['pm_depart'] = $timeOut->format('H:i');
+                } else {
+                    $daysData[$day]['pm_depart'] = '17:00';
+                }
+
+                // Calculate undertime
+                if ($firstRecord->time_in && $lastRecord->time_out) {
+                    $timeIn = \Carbon\Carbon::parse($firstRecord->time_in);
+                    $timeOut = \Carbon\Carbon::parse($lastRecord->time_out);
+                    $expected_minutes = 480; // 8 hours
+                    $actual_minutes = $timeIn->diffInMinutes($timeOut);
+                    $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
+
+                    if ($actual_work_minutes < $expected_minutes) {
+                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
+                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
+                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
+                        $totalHours += $daysData[$day]['undertime_hours'];
+                        $totalMinutes += $daysData[$day]['undertime_minutes'];
+                        // Handle minute overflow
+                        if ($totalMinutes >= 60) {
+                            $totalHours += intdiv($totalMinutes, 60);
+                            $totalMinutes = $totalMinutes % 60;
+                        }
+                    } else {
+                        $daysData[$day]['undertime_hours'] = 0;
+                        $daysData[$day]['undertime_minutes'] = 0;
+                    }
+                }
+            }
+        }
+
+        // Return the view for printing
+        return view('exports.attendance-history-export', [
+            'user' => $user,
+            'attendanceRecords' => $attendanceRecords,
+            'daysData' => $daysData,
+            'month' => $currentMonth,
+            'year' => $currentYear,
+        ]);
     }
 
     /**

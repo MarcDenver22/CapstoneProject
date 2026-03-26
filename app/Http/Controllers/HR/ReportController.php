@@ -562,7 +562,7 @@ class ReportController extends Controller
             'file' => $fileName,
         ]);
 
-        $html = (new \App\Exports\DtrPdfExport($records, $user, $month, $year))->generate();
+        $html = (new \App\Exports\DtrExport($records, $user, $month, $year))->generate();
 
         return Pdf::loadHTML($html)
             ->setPaper('a4')
@@ -571,6 +571,42 @@ class ReportController extends Controller
             ->setOption('margin-left', 0.5)
             ->setOption('margin-right', 0.5)
             ->download($fileName);
+    }
+
+    /**
+     * Print DTR in Civil Service Format
+     */
+    public function printDtrPdf(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2020',
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+        $month = $request->month;
+        $year = $request->year;
+
+        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+
+        $records = Attendance::where('user_id', $user->id)
+            ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->get();
+
+        // Log the print action
+        AuditLogger::log('print', 'dtr_pdf', Auth::id(), [
+            'user_id' => $user->id,
+            'month' => $month,
+            'year' => $year,
+        ]);
+
+        $html = (new \App\Exports\DtrExport($records, $user, $month, $year))->generate();
+
+        return view('exports.dtr-print', [
+            'html' => $html,
+        ]);
     }
 
 
