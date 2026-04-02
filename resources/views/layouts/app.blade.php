@@ -213,7 +213,7 @@
                         <!-- Reports -->
                         <a href="{{ route('hr.reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
                             <i class="fas fa-chart-bar w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
-                            <span class="text-sm font-medium">Attendance Reports</span>
+                            <span class="text-sm font-medium">DTR Report</span>
                         </a>
                         <!-- Campus Updates -->
                         <a href="{{ route('hr.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
@@ -300,11 +300,6 @@
                             <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Campus Updates</span>
                         </a>
-                        <!-- Export -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
-                            <i class="fas fa-download w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">Export</span>
-                        </a>
                     </div>
                 </div>
                 @endif
@@ -350,11 +345,6 @@
                         <a href="{{ route('admin.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
                             <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Campus Updates</span>
-                        </a>
-                        <!-- Export -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
-                            <i class="fas fa-download w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">Export</span>
                         </a>
                     </div>
                 </div>

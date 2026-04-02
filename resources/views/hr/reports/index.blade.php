@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('header', 'Attendance Reports')
-@section('subheader', 'Generate and export attendance reports')
+@section('header', 'DTR Report')
+@section('subheader', 'Generate and export DTR reports')
 
 @section('content')
 <div class="space-y-6">
