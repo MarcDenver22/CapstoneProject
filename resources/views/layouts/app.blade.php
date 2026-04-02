@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Faculty Employee Portal</title>
+    <title>PSU - Asingan Campus Employee Attendance Management System Using Real-Time Face Recognition</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/psu logo.png') }}">
@@ -213,7 +213,7 @@
                         <!-- Reports -->
                         <a href="{{ route('hr.reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
                             <i class="fas fa-chart-bar w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
-                            <span class="text-sm font-medium">DTR Report</span>
+                            <span class="text-sm font-medium">DTR Reports</span>
                         </a>
                         <!-- Campus Updates -->
                         <a href="{{ route('hr.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">

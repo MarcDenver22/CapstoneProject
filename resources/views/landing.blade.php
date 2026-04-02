@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Faculty Employee Attendance Management System - Streamline attendance tracking, leave management, and employee engagement">
-    <title>Faculty Employee Attendance System</title>
+    <meta name="description" content="PSU - Asingan Campus Employee Attendance Management System Using Real-Time Face Recognition - Streamline attendance tracking, leave management, and employee engagement">
+    <title>PSU - Asingan Campus Employee Attendance Management System Using Real-Time Face Recognition</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/psu logo.png') }}">
@@ -444,8 +444,7 @@
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center gap-3 group">
-                    <img src="{{ asset('images/psu logo.png') }}" alt="PSU Logo" class="h-8 transition-transform group-hover:scale-110">
-                    <span class="text-xl font-bold gradient-text">Faculty Portal</span>
+                    <img src="{{ asset('images/PSU-LABEL-LOGO.png') }}" alt="PSU Logo" class="h-8 transition-transform group-hover:scale-110">
                 </div>
                 <div class="hidden md:flex gap-8">
                     <a href="#features" class="text-gray-700 font-medium hover:gradient-text transition duration-300 relative group">
@@ -471,7 +470,10 @@
     </nav>
 
     <!-- Hero Section with Enhanced Design -->
-    <section class="gradient-bg text-white pt-28 pb-16 px-4 relative overflow-hidden">
+    <section class="text-white pt-28 pb-16 px-4 relative overflow-hidden" style="background-image: url('{{ asset('images/psu-background.png') }}'); background-size: cover; background-position: center; background-attachment: fixed;">
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/70 to-purple-600/70"></div>
+        
         <!-- Animated Background Elements -->
         <div class="absolute top-20 left-10 w-72 h-72 bg-white opacity-5 rounded-full blur-3xl animate-pulse"></div>
         <div class="absolute bottom-10 right-10 w-96 h-96 bg-blue-300 opacity-5 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
@@ -481,9 +483,9 @@
                 <div class="animate-slide-in-left">
                     <div class="badge-gradient mb-4">✨ Smart Attendance Management</div>
                     <h1 class="section-title mb-6 leading-tight">
-                        Faculty Employee Attendance
+                        PSU - Asingan Campus
                         <span class="block bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
-                            Management System
+                            Employee Attendance Management System Using Real-Time Face Recognition
                         </span>
                     </h1>
                     <p class="text-xl text-gray-100 mb-8 leading-relaxed opacity-90">
@@ -515,10 +517,7 @@
                     </div>
                 </div>
                 <div class="flex justify-center animate-slide-in-right">
-                    <div class="float relative">
-                        <div class="pulse-glow absolute inset-0 rounded-full"></div>
-                        <img src="{{ asset('images/psu logo.png') }}" alt="PSU Logo" class="w-full h-auto relative z-10" style="max-width: 100%;">
-                    </div>
+                   
                 </div>
             </div>
         </div>
@@ -956,91 +955,36 @@
     </section>
 
     <!-- Footer -->
-    <footer id="contact" class="bg-gray-900 text-white py-12 px-4 relative overflow-hidden">
+    <footer id="contact" class="bg-gray-900 text-white py-16 px-4 relative overflow-hidden">
         <div class="absolute top-0 right-0 w-96 h-96 bg-purple-500 opacity-5 rounded-full blur-3xl"></div>
         <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 opacity-5 rounded-full blur-3xl"></div>
 
-        <di class="container mx-auto relative z-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-                <div>
-                    <div class="flex items-center gap-3 mb-6">
-                        <img src="{{ asset('images/psu logo.png') }}" alt="PSU Logo" class="h-10">
-                        <span class="text-2xl font-bold">Faculty Portal</span>
-                    </div>
-                    <p class="text-gray-400 leading-relaxed">Faculty Employee Attendance Management System designed for modern institutions.</p>
-                    <div class="flex gap-4 mt-6">
-                        <a href="#" class="w-10 h-10 rounded-full bg-white bg-opacity-10 hover:bg-opacity-20 flex items-center justify-center transition">
-                            <i class="fab fa-facebook text-sm"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-white bg-opacity-10 hover:bg-opacity-20 flex items-center justify-center transition">
-                            <i class="fab fa-twitter text-sm"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-white bg-opacity-10 hover:bg-opacity-20 flex items-center justify-center transition">
-                            <i class="fab fa-linkedin text-sm"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-lg mb-6">Product</h4>
-                    <ul class="space-y-3 text-gray-400">
-                        <li><a href="#features" class="hover:text-white transition">Features</a></li>
-                        <li><a href="#roles" class="hover:text-white transition">User Roles</a></li>
-                        <li><a href="#" class="hover:text-white transition">Pricing</a></li>
-                        <li><a href="#" class="hover:text-white transition">Security</a></li>
-                        <li><a href="#" class="hover:text-white transition">Updates</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-lg mb-6">Resources</h4>
-                    <ul class="space-y-3 text-gray-400">
-                        <li><a href="#" class="hover:text-white transition">Documentation</a></li>
-                        <li><a href="#" class="hover:text-white transition">API Reference</a></li>
-                        <li><a href="#" class="hover:text-white transition">Tutorials</a></li>
-                        <li><a href="#" class="hover:text-white transition">Blog</a></li>
-                        <li><a href="#" class="hover:text-white transition">Community</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-lg mb-6">Company</h4>
-                    <ul class="space-y-3 text-gray-400">
-                        <li><a href="#" class="hover:text-white transition">About Us</a></li>
-                        <li><a href="#" class="hover:text-white transition">Careers</a></li>
-                        <li><a href="#" class="hover:text-white transition">Press</a></li>
-                        <li><a href="#" class="hover:text-white transition">Partners</a></li>
-                        <li><a href="#" class="hover:text-white transition">Contact</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-lg mb-6">Support</h4>
-                    <ul class="space-y-3 text-gray-400">
-                        <li class="flex items-center gap-2">
-                            <i class="fas fa-envelope text-purple-400"></i>
-                            <a href="mailto:contact@faculty.edu" class="hover:text-white transition">contact@faculty.edu</a>
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <i class="fas fa-phone text-purple-400"></i>
-                            <a href="tel:+1234567890" class="hover:text-white transition">(888) 123-4567</a>
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <i class="fas fa-map-marker-alt text-purple-400"></i>
-                            <span>123 Education St, Campus, CA</span>
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <i class="fas fa-clock text-purple-400"></i>
-                            <span>24/7 Available</span>
-                        </li>
-                    </ul>
-                </div>
+        <div class="container mx-auto relative z-10 text-center">
+            <!-- Social Media Icons -->
+            <div class="flex gap-4 justify-center mb-8">
+                <a href="#" class="w-12 h-12 rounded-lg bg-blue-600 hover:bg-blue-700 flex items-center justify-center transition transform hover:scale-110">
+                    <i class="fab fa-facebook text-lg"></i>
+                </a>
+                <a href="#" class="w-12 h-12 rounded-lg bg-blue-400 hover:bg-blue-500 flex items-center justify-center transition transform hover:scale-110">
+                    <i class="fab fa-twitter text-lg"></i>
+                </a>
+                <a href="#" class="w-12 h-12 rounded-lg bg-blue-700 hover:bg-blue-800 flex items-center justify-center transition transform hover:scale-110">
+                    <i class="fab fa-linkedin text-lg"></i>
+                </a>
+                <a href="#" class="w-12 h-12 rounded-lg bg-pink-600 hover:bg-pink-700 flex items-center justify-center transition transform hover:scale-110">
+                    <i class="fab fa-instagram text-lg"></i>
+                </a>
             </div>
 
-           
-                <div class="text-center text-gray-500 text-xs pt-4 border-t border-gray-800">
-                    <p class="mb-2">Developed by: Aguilar, Larry Sykioco • Buaya, Reden Ines • Ducsa, Neslyn Arcarte • Nazaire, Edleen Grace Arenas • Riturban, Marc Denver Fernandez</p>
-                </div>
+            <!-- PSU Label Logo -->
+            <div class="flex justify-center mb-8">
+                <img src="{{ asset('images/PSU-LABEL-LOGO.png') }}" alt="PSU Label Logo" class="h-24 transition-transform hover:scale-105">
+            </div>
+
+            <!-- Developer Credits -->
+            <div class="text-center text-gray-500 text-xs pt-8 mt-8 border-t border-gray-800">
+                <p class="mb-2">Developed by: Aguilar, Larry Sykioco • Buaya, Reden Ines • Ducsa, Neslyn Arcarte • Nazaire, Edleen Grace Arenas • Riturban, Marc Denver Fernandez</p>
+            </div>
         </div>
     </footer>
 
