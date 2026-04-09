@@ -45,7 +45,7 @@ class FaceEnrollmentController extends Controller
         // Store the sample if under limit
         $currentEncodings = json_decode($user->face_encodings ?? '[]', true);
 
-        if (count($currentEncodings) < 5) {
+        if (count($currentEncodings) < 10) {
             $currentEncodings[] = $imageData;
             $user->update([
                 'face_encodings' => json_encode($currentEncodings),

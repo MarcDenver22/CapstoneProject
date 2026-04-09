@@ -21,10 +21,18 @@
                         <tr class="border-b border-gray-300 bg-gray-50">
                             <th class="text-left py-3 px-4 font-semibold text-gray-700">EMPLOYEE</th>
                             <th class="text-left py-3 px-4 font-semibold text-gray-700">DATE</th>
-                            <th class="text-left py-3 px-4 font-semibold text-gray-700">TIME-IN</th>
-                            <th class="text-left py-3 px-4 font-semibold text-gray-700">TIME-OUT</th>
+                            <th colspan="2" class="text-center py-3 px-4 font-semibold text-gray-700 border-r border-gray-300">A.M.</th>
+                            <th colspan="2" class="text-center py-3 px-4 font-semibold text-gray-700 border-r border-gray-300">P.M.</th>
                             <th class="text-left py-3 px-4 font-semibold text-gray-700">STATUS</th>
                             <th class="text-left py-3 px-4 font-semibold text-gray-700">LIVENESS</th>
+                        </tr>
+                        <tr class="border-b border-gray-300 bg-gray-50">
+                            <th colspan="2"></th>
+                            <th class="text-center py-2 px-4 font-semibold text-gray-700 border-r border-gray-300 text-xs">Arrival</th>
+                            <th class="text-center py-2 px-4 font-semibold text-gray-700 border-r border-gray-300 text-xs">Departure</th>
+                            <th class="text-center py-2 px-4 font-semibold text-gray-700 border-r border-gray-300 text-xs">Arrival</th>
+                            <th class="text-center py-2 px-4 font-semibold text-gray-700 border-r border-gray-300 text-xs">Departure</th>
+                            <th colspan="2"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -34,24 +42,34 @@
                                     <p class="font-medium text-gray-900">{{ $record->user->name ?? 'N/A' }}</p>
                                     <p class="text-xs text-gray-500">{{ $record->user->email ?? '-' }}</p>
                                 </td>
-                                <td class="py-3 px-4 text-gray-600">
+                                <td class="py-3 px-4 text-gray-600 border-r border-gray-300">
                                     {{ $record->attendance_date->format('M d, Y') }}
                                 </td>
-                                <td class="py-3 px-4 text-gray-600">
-                                    @if($record->time_in)
-                                        {{ $record->time_in->format('H:i') }}
+                                <!-- A.M. Arrival -->
+                                <td class="py-3 px-4 text-center border-r border-gray-300">
+                                    @if($record->time_in && $record->time_in->hour < 12)
+                                        <span class="text-gray-600 font-medium">{{ $record->time_in->format('H:i') }}</span>
                                     @else
                                         <span class="text-gray-400">—</span>
                                     @endif
                                 </td>
-                                <td class="py-3 px-4 text-gray-600">
+                                <!-- A.M. Departure -->
+                                <td class="py-3 px-4 text-center border-r border-gray-300">
+                                    <span class="text-gray-400">—</span>
+                                </td>
+                                <!-- P.M. Arrival -->
+                                <td class="py-3 px-4 text-center border-r border-gray-300">
+                                    <span class="text-gray-400">—</span>
+                                </td>
+                                <!-- P.M. Departure -->
+                                <td class="py-3 px-4 text-center border-r border-gray-300">
                                     @if($record->time_out)
-                                        {{ $record->time_out->format('H:i') }}
+                                        <span class="text-gray-600 font-medium">{{ $record->time_out->format('H:i') }}</span>
                                     @else
                                         <span class="text-gray-400">—</span>
                                     @endif
                                 </td>
-                                <td class="py-3 px-4">
+                                <td class="py-3 px-4 border-r border-gray-300">
                                     <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $record->getStatusBadgeClass() }}">
                                         {{ ucfirst(str_replace('_', ' ', $record->status)) }}
                                     </span>

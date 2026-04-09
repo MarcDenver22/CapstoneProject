@@ -48,7 +48,7 @@
                         <div class="relative h-2 rounded-full bg-gray-200 overflow-hidden">
                             <div id="progressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
                         </div>
-                        <p class="text-gray-700 text-sm mt-2"><span id="sampleCount">0</span> / 5 samples</p>
+                        <p class="text-gray-700 text-sm mt-2"><span id="sampleCount">0</span> / 10 samples</p>
                         <p class="text-gray-500 text-xs mt-1">Minimum 3 required</p>
                     </div>
                     <div class="mt-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
@@ -193,7 +193,7 @@ completeBtn.addEventListener('click', async () => {
 
 function updateUI() {
     sampleCount.textContent = samples.length;
-    progressBar.style.width = ((samples.length / 5) * 100) + '%';
+    progressBar.style.width = ((samples.length / 10) * 100) + '%';
     if (samples.length >= 3) completeBtn.disabled = false;
 
     samplesGrid.innerHTML = '';

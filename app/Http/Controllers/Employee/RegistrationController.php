@@ -18,7 +18,7 @@ class RegistrationController extends Controller
     public function showForm()
     {
         $departments = Department::active()->get();
-        return view('employee.combined_registration', compact('departments'));
+        return view('employee.employee_registration', compact('departments'));
     }
 
     /**
@@ -76,7 +76,7 @@ class RegistrationController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        return view('employee.combined_face_enrollment', compact('user'));
+        return view('employee.employee_face_enrollment', compact('user'));
     }
 
     /**
@@ -100,7 +100,7 @@ class RegistrationController extends Controller
         // Store the sample
         $currentEncodings = json_decode($user->face_encodings ?? '[]', true);
 
-        if (count($currentEncodings) < 5) {
+        if (count($currentEncodings) < 10) {
             $currentEncodings[] = $imageData;
             $user->update([
                 'face_encodings' => json_encode($currentEncodings),

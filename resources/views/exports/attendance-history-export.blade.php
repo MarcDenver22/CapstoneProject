@@ -57,9 +57,9 @@
         .total-row td { font-weight: 700; }
 
         .cert { font-size: 7px; margin: 0.5px 0 0 0; text-align: center; line-height: 1.2; padding: 0; }
-        .sigline { border-bottom: 1px solid #000; width: 50%; height: 5px; margin: 1px auto 0; }
-        .verified { margin-top: 0.5px; font-size: 7px; text-align: center; }
-        .sig-label { font-size: 7px; text-align: center; margin-top: 0.3px; }
+        .sigline { border-bottom: 1px solid #000; width: 50%; height: 0; margin: 2px auto 0; line-height: 1; }
+        .verified { margin-top: 3px; font-size: 7px; text-align: center; line-height: 1; }
+        .sig-label { font-size: 7px; text-align: center; margin-top: 1px; line-height: 1; }
     </style>
 </head>
 <body>
@@ -159,8 +159,8 @@
                 I certify on my honor that the above is a true and correct report of the hours of work performed, record of which was made daily at the time of arrival and departure from office.
             </div>
 
-            <div class="sigline" style="margin-top:3px; margin-bottom:2.5px; border-bottom: 2px solid #000; width:92%; margin-left:auto; margin-right:auto;"></div>
-            <div class="verified" style="margin-top:2px; margin-bottom:2.5px; text-align: center;">VERIFIED as to the prescribed office hours:</div>
+            <div class="sigline" style="margin-top:8px; margin-bottom:2.5px; border-bottom: 2px solid #000; width:92%; margin-left:auto; margin-right:auto;"></div>
+            <div class="verified" style="text-align: center;">VERIFIED as to the prescribed office hours:</div>
             <div class="sigline" style="margin-top:8px; margin-bottom:1px; border-bottom: 2px solid #000; width:92%; margin-left:auto; margin-right:auto;"></div>
             <div class="sig-label" style="margin-top:1px; font-weight: 700; text-align: center;">In Charge</div>
         </div>
@@ -258,7 +258,7 @@
             </div>
 
             <div class="sigline" style="margin-top:8px; margin-bottom:2.5px; border-bottom: 2px solid #000; width:92%; margin-left:auto; margin-right:auto;"></div>
-            <div class="verified" style="margin-top:2px; margin-bottom:2.5px; text-align: center;">VERIFIED as to the prescribed office hours:</div>
+            <div class="verified" style="text-align: center;">VERIFIED as to the prescribed office hours:</div>
             <div class="sigline" style="margin-top:8px; margin-bottom:1px; border-bottom: 2px solid #000; width:92%; margin-left:auto; margin-right:auto;"></div>
             <div class="sig-label" style="margin-top:1px; font-weight: 700; text-align: center;">In Charge</div>
         </div>

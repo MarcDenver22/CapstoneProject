@@ -33,9 +33,9 @@
                     <div>
                         <p class="text-gray-500 text-xs uppercase font-semibold mb-2">Samples Captured</p>
                         <div class="relative h-2 rounded-full bg-gray-200 overflow-hidden">
-                            <div id="progressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: {{ ((auth()->user()->face_samples_count ?? 0) / 5) * 100 }}%"></div>
+                            <div id="progressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: {{ ((auth()->user()->face_samples_count ?? 0) / 10) * 100 }}%"></div>
                         </div>
-                        <p class="text-gray-700 text-sm mt-2"><span id="sampleCount">{{ auth()->user()->face_samples_count ?? 0 }}</span> / 5 samples</p>
+                        <p class="text-gray-700 text-sm mt-2"><span id="sampleCount">{{ auth()->user()->face_samples_count ?? 0 }}</span> / 10 samples</p>
                         <p class="text-gray-500 text-xs mt-1">Minimum 3 required</p>
                     </div>
                     <div class="mt-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
@@ -184,7 +184,7 @@ completeBtn.addEventListener('click', async () => {
 function updateUI(totalCount = initialCount) {
     const currentCount = initialCount + samples.length;
     sampleCount.textContent = currentCount;
-    progressBar.style.width = ((currentCount / 5) * 100) + '%';
+    progressBar.style.width = ((currentCount / 10) * 100) + '%';
     if (currentCount >= 3) completeBtn.disabled = false;
 
     samplesGrid.innerHTML = '';

@@ -499,38 +499,6 @@ class ReportController extends Controller
     }
 
     /**
-    {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'month' => 'required|integer|between:1,12',
-            'year' => 'required|integer|min:2020',
-        ]);
-
-        $user = User::findOrFail($request->user_id);
-        $month = $request->month;
-        $year = $request->year;
-
-        $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
-
-        $records = Attendance::where('user_id', $user->id)
-            ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->get();
-
-        $fileName = "DTR_{$user->name}_{$month}_{$year}.xlsx";
-
-        // Log the export action
-        AuditLogger::log('export', 'dtr_excel', Auth::id(), [
-            'user_id' => $user->id,
-            'month' => $month,
-            'year' => $year,
-            'file' => $fileName,
-        ]);
-
-        return (new \App\Exports\DtrExport($records, $user, $month, $year))->download($fileName);
-    }
-
-    /**
      * Export DTR as PDF (Civil Service Format)
      */
     public function exportDtrPdf(Request $request)
@@ -548,9 +516,79 @@ class ReportController extends Controller
         $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
 
-        $records = Attendance::where('user_id', $user->id)
+        $attendanceRecords = Attendance::where('user_id', $user->id)
             ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->orderBy('attendance_date', 'asc')
             ->get();
+
+        // Process attendance records into structured daily data
+        $daysData = [];
+        $totalHours = 0;
+        $totalMinutes = 0;
+
+        // Group records by day
+        $recordsByDay = $attendanceRecords->groupBy(function($record) {
+            return Carbon::parse($record->attendance_date)->day;
+        });
+
+        // Process each day (1-31)
+        for ($day = 1; $day <= 31; $day++) {
+            $dayRecords = $recordsByDay->get($day);
+            $daysData[$day] = [];
+
+            if ($dayRecords && $dayRecords->count() > 0) {
+                // Get the first and last record for the day
+                $firstRecord = $dayRecords->first();
+                $lastRecord = $dayRecords->last();
+
+                // A.M. Arrival (first time_in of the day, or default 08:00)
+                if ($firstRecord->time_in) {
+                    $timeIn = Carbon::parse($firstRecord->time_in);
+                    $daysData[$day]['am_arrival'] = $timeIn->format('H:i');
+                } else {
+                    $daysData[$day]['am_arrival'] = '08:00';
+                }
+
+                // A.M. Departure (noon - 12:00)
+                $daysData[$day]['am_depart'] = '12:00';
+
+                // P.M. Arrival (afternoon - 13:00)
+                $daysData[$day]['pm_arrival'] = '13:00';
+
+                // P.M. Departure (last time_out of the day, or default 17:00)
+                if ($lastRecord->time_out) {
+                    $timeOut = Carbon::parse($lastRecord->time_out);
+                    $daysData[$day]['pm_depart'] = $timeOut->format('H:i');
+                } else {
+                    $daysData[$day]['pm_depart'] = '17:00';
+                }
+
+                // Calculate undertime
+                if ($firstRecord->time_in && $lastRecord->time_out) {
+                    $timeIn = Carbon::parse($firstRecord->time_in);
+                    $timeOut = Carbon::parse($lastRecord->time_out);
+                    $expected_minutes = 480; // 8 hours
+                    $actual_minutes = $timeIn->diffInMinutes($timeOut);
+                    $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
+
+                    if ($actual_work_minutes < $expected_minutes) {
+                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
+                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
+                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
+                        $totalHours += $daysData[$day]['undertime_hours'];
+                        $totalMinutes += $daysData[$day]['undertime_minutes'];
+                        // Handle minute overflow
+                        if ($totalMinutes >= 60) {
+                            $totalHours += intdiv($totalMinutes, 60);
+                            $totalMinutes = $totalMinutes % 60;
+                        }
+                    } else {
+                        $daysData[$day]['undertime_hours'] = 0;
+                        $daysData[$day]['undertime_minutes'] = 0;
+                    }
+                }
+            }
+        }
 
         $fileName = "DTR_{$user->name}_{$month}_{$year}.pdf";
 
@@ -562,8 +600,16 @@ class ReportController extends Controller
             'file' => $fileName,
         ]);
 
-        $html = (new \App\Exports\DtrExport($records, $user, $month, $year))->generate();
+        // Generate the HTML from the view
+        $html = view('exports.attendance-history-export', [
+            'user' => $user,
+            'attendanceRecords' => $attendanceRecords,
+            'daysData' => $daysData,
+            'month' => $month,
+            'year' => $year,
+        ])->render();
 
+        // Generate and download PDF
         return Pdf::loadHTML($html)
             ->setPaper('a4')
             ->setOption('margin-top', 0.5)
@@ -591,9 +637,79 @@ class ReportController extends Controller
         $startDate = Carbon::createFromFormat('Y-m-d', "{$year}-{$month}-01")->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
 
-        $records = Attendance::where('user_id', $user->id)
+        $attendanceRecords = Attendance::where('user_id', $user->id)
             ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->orderBy('attendance_date', 'asc')
             ->get();
+
+        // Process attendance records into structured daily data
+        $daysData = [];
+        $totalHours = 0;
+        $totalMinutes = 0;
+
+        // Group records by day
+        $recordsByDay = $attendanceRecords->groupBy(function($record) {
+            return Carbon::parse($record->attendance_date)->day;
+        });
+
+        // Process each day (1-31)
+        for ($day = 1; $day <= 31; $day++) {
+            $dayRecords = $recordsByDay->get($day);
+            $daysData[$day] = [];
+
+            if ($dayRecords && $dayRecords->count() > 0) {
+                // Get the first and last record for the day
+                $firstRecord = $dayRecords->first();
+                $lastRecord = $dayRecords->last();
+
+                // A.M. Arrival (first time_in of the day, or default 08:00)
+                if ($firstRecord->time_in) {
+                    $timeIn = Carbon::parse($firstRecord->time_in);
+                    $daysData[$day]['am_arrival'] = $timeIn->format('H:i');
+                } else {
+                    $daysData[$day]['am_arrival'] = '08:00';
+                }
+
+                // A.M. Departure (noon - 12:00)
+                $daysData[$day]['am_depart'] = '12:00';
+
+                // P.M. Arrival (afternoon - 13:00)
+                $daysData[$day]['pm_arrival'] = '13:00';
+
+                // P.M. Departure (last time_out of the day, or default 17:00)
+                if ($lastRecord->time_out) {
+                    $timeOut = Carbon::parse($lastRecord->time_out);
+                    $daysData[$day]['pm_depart'] = $timeOut->format('H:i');
+                } else {
+                    $daysData[$day]['pm_depart'] = '17:00';
+                }
+
+                // Calculate undertime
+                if ($firstRecord->time_in && $lastRecord->time_out) {
+                    $timeIn = Carbon::parse($firstRecord->time_in);
+                    $timeOut = Carbon::parse($lastRecord->time_out);
+                    $expected_minutes = 480; // 8 hours
+                    $actual_minutes = $timeIn->diffInMinutes($timeOut);
+                    $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
+
+                    if ($actual_work_minutes < $expected_minutes) {
+                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
+                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
+                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
+                        $totalHours += $daysData[$day]['undertime_hours'];
+                        $totalMinutes += $daysData[$day]['undertime_minutes'];
+                        // Handle minute overflow
+                        if ($totalMinutes >= 60) {
+                            $totalHours += intdiv($totalMinutes, 60);
+                            $totalMinutes = $totalMinutes % 60;
+                        }
+                    } else {
+                        $daysData[$day]['undertime_hours'] = 0;
+                        $daysData[$day]['undertime_minutes'] = 0;
+                    }
+                }
+            }
+        }
 
         // Log the print action
         AuditLogger::log('print', 'dtr_pdf', Auth::id(), [
@@ -602,10 +718,13 @@ class ReportController extends Controller
             'year' => $year,
         ]);
 
-        $html = (new \App\Exports\DtrExport($records, $user, $month, $year))->generate();
-
-        return view('exports.dtr-print', [
-            'html' => $html,
+        // Return the view for printing
+        return view('exports.attendance-history-export', [
+            'user' => $user,
+            'attendanceRecords' => $attendanceRecords,
+            'daysData' => $daysData,
+            'month' => $month,
+            'year' => $year,
         ]);
     }
 
