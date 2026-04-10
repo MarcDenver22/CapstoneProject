@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\FaceRecognitionService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +12,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register FaceRecognitionService as singleton
+        $this->app->singleton(FaceRecognitionService::class, function ($app) {
+            return new FaceRecognitionService();
+        });
     }
 
     /**

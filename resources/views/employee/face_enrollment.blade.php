@@ -100,20 +100,69 @@ let initialCount = {{ auth()->user()->face_samples_count ?? 0 }};
 
 async function initCamera() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        // Check if browser supports getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Your browser does not support camera access. Please use Chrome, Firefox, Safari, or Edge.');
+        }
+
+        const constraints = {
+            video: {
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
+        
         video.onloadedmetadata = () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            console.log('Camera ready:', video.videoWidth, 'x', video.videoHeight);
         };
+
+        // Ensure video plays
+        video.play().catch(err => {
+            console.error('Video play error:', err);
+            alert('Unable to play video stream. Please refresh the page.');
+        });
+
     } catch (err) {
-        alert('Unable to access camera: ' + err.message);
+        console.error('Camera error:', err);
+        let message = 'Unable to access camera: ' + err.message;
+        
+        if (err.name === 'NotAllowedError') {
+            message = 'Camera permission denied. Please allow camera access in your browser settings and refresh the page.';
+        } else if (err.name === 'NotFoundError') {
+            message = 'No camera device found. Please make sure your device has a camera.';
+        } else if (err.name === 'NotReadableError') {
+            message = 'Camera is already in use by another app. Please close other camera apps.';
+        }
+        
+        alert(message);
+        captureBtn.disabled = true;
     }
 }
 
 captureBtn.addEventListener('click', async () => {
+    // If camera not initialized, try initializing first
+    if (!video.srcObject) {
+        console.log('Camera not ready, initializing...');
+        await initCamera();
+        // Wait a moment for camera to initialize
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // Check if we have a video stream
+    if (!video.srcObject) {
+        alert('Camera is not ready. Please refresh the page and allow camera access.');
+        return;
+    }
+
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = canvas.toDataURL('image/jpeg');
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
     captureIndicator.classList.remove('hidden');
     captureBtn.disabled = true;
 
@@ -126,12 +175,34 @@ captureBtn.addEventListener('click', async () => {
             },
             body: JSON.stringify({ face_sample: imageData })
         });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers.get('content-type'));
+
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const textResponse = await response.text();
+            console.error('Server returned non-JSON:', textResponse.substring(0, 200));
+            throw new Error('Server error: ' + response.statusText + ' (check console for details)');
+        }
+
         const data = await response.json();
+        
+        if (!response.ok) {
+            console.error('API error:', data);
+            throw new Error(data.message || 'Failed to save sample');
+        }
+
         if (data.success) {
             samples.push(imageData);
             updateUI(data.sample_count);
+            console.log('Sample saved successfully');
+        } else {
+            alert('Error: ' + (data.message || 'Failed to save sample'));
         }
     } catch (error) {
+        console.error('Capture error:', error);
         alert('Error: ' + error.message);
     } finally {
         captureIndicator.classList.add('hidden');
@@ -200,7 +271,8 @@ function updateUI(totalCount = initialCount) {
     });
 }
 
-initCamera();
+// Only initialize camera when user clicks the button (better UX)
+// This avoids automatic permission requests that some browsers block
 updateUI();
 </script>
 

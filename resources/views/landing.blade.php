@@ -460,9 +460,12 @@
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 group-hover:w-full transition-all duration-300"></span>
                     </a>
                 </div>
-                <div class="flex gap-3">
+                                <div class="flex gap-3">
                     <a href="{{ route('login') }}" class="px-6 py-2 text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium hover:shadow-lg transition-all duration-300">
                         Sign In
+                    </a>
+                    <a href="{{ route('kiosk.unlock') }}" class="px-6 py-2 text-white bg-gradient-to-r from-green-500 to-teal-500 rounded-lg font-medium hover:shadow-lg transition-all duration-300">
+                        <i class="fas fa-qrcode mr-2"></i>Kiosk
                     </a>
                 </div>
             </div>
@@ -495,6 +498,10 @@
                         <a href="{{ route('login') }}" class="btn-primary text-white px-8 py-4 rounded-lg text-center inline-flex items-center justify-center gap-2">
                             <span>Get Started</span>
                             <i class="fas fa-arrow-right"></i>
+                        </a>
+                        <a href="{{ route('kiosk.unlock') }}" class="btn-primary text-white px-8 py-4 rounded-lg text-center inline-flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            <span>Go to Attendance Kiosk</span>
+                            <i class="fas fa-camera"></i>
                         </a>
                         <button class="btn-secondary text-white px-8 py-4 rounded-lg text-center inline-flex items-center justify-center gap-2">
                             <span>Learn More</span>

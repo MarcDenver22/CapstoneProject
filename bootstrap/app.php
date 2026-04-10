@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'can.access.admin' => \App\Http\Middleware\CanAccessAdmin::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'kiosk.ip.allowlist' => \App\Http\Middleware\KioskIpAllowlist::class,
+            'kiosk.pin.unlock' => \App\Http\Middleware\KioskPinUnlock::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\KioskController;
+use App\Http\Controllers\KioskScanController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EmployeesController;
 use App\Http\Controllers\Admin\EventController;
@@ -30,6 +32,21 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // Employee Registration routes (public)
 Route::get('/register', [RegistrationController::class, 'showForm'])->name('employee.registration.show');
 Route::post('/register', [RegistrationController::class, 'store'])->name('employee.registration.store');
+
+// Kiosk routes (public but IP-restricted)
+Route::middleware('kiosk.ip.allowlist')->group(function () {
+    // Kiosk unlock page (IP check only)
+    Route::get('/kiosk/unlock', [KioskController::class, 'showUnlock'])->name('kiosk.unlock');
+    Route::post('/kiosk/verify-pin', [KioskController::class, 'verifyPin'])->name('kiosk.verify-pin');
+    
+    // Kiosk main page (IP check only, PIN check handled in controller)
+    Route::get('/kiosk', [KioskController::class, 'index'])->name('kiosk');
+    Route::post('/kiosk/logout', [KioskController::class, 'logout'])->name('kiosk.logout');
+    
+    // Kiosk scan page (camera-based face scan)
+    Route::get('/kiosk/scan', [KioskScanController::class, 'index'])->name('kiosk.scan');
+    Route::post('/kiosk/scan', [KioskScanController::class, 'scan'])->name('kiosk.scan');
+});
 
 // Protected routes
 Route::middleware('auth')->group(function () {

@@ -253,6 +253,29 @@
             background-clip: text;
             font-weight: 600;
         }
+
+        /* Back button - pinned like kiosk */
+        .back-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .back-button:hover {
+            color: #764ba2;
+        }
     </style>
 </head>
 <body class="antialiased min-h-screen flex items-center justify-center p-4 relative">
@@ -354,6 +377,12 @@
                 >
                     <i class="fas fa-sign-in-alt mr-2"></i>Sign in to your account
                 </button>
+
+                {{-- Back to Home --}}
+                <a href="{{ url('/') }}" class="back-button text-purple-600 hover:text-purple-800" title="Go back to home page">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Home</span>
+                </a>
             </form>
         </div>
 
