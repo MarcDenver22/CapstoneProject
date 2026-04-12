@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Descriptor Debug Tool</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section {
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        h1 { color: #00ffff; margin-bottom: 20px; }
+        h2 { color: #00ff00; margin-top: 15px; margin-bottom: 10px; font-size: 16px; }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        button:hover { background: #00dd00; }
+        input, textarea {
+            background: #222;
+            color: #0f0;
+            border: 1px solid #00ff00;
+            padding: 8px;
+            width: 100%;
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .output {
+            background: #000;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        video { max-width: 300px; border: 1px solid #00ff00; margin: 10px 0; }
+        .stats { font-size: 12px; line-height: 1.4; }
+        .good { color: #00ff00; }
+        .bad { color: #ff0000; }
+        .warning { color: #ffff00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Face Descriptor Debug Tool</h1>
+
+        <div class="section">
+            <h2>Step 1: Extract Descriptor from Camera</h2>
+            <button onclick="loadFaceAPI()">1. Load face-api.js</button>
+            <button onclick="startCamera()">2. Start Camera</button>
+            <button onclick="extractDescriptor()">3. Extract Descriptor</button>
+            <button onclick="stopCamera()">Stop Camera</button>
+            <video id="video" autoplay playsinline muted></video>
+            <div class="output" id="extractOutput"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 2: Paste Extracted Descriptor</h2>
+            <p>Copy the extracted descriptor from above and paste it here:</p>
+            <textarea id="descriptorInput" placeholder="Paste extracted descriptor here (should be an array of numbers)" rows="5"></textarea>
+            <button onclick="testDescriptor()">Test This Descriptor</button>
+        </div>
+
+        <div class="section">
+            <h2>Step 3: Test Against Database</h2>
+            <label>Employee ID: <input type="text" id="employeeId" value="EMP003" style="width: 150px;"></label>
+            <button onclick="testAgainstDB()">Test Against DB Enrolled Descriptors</button>
+            <div class="output" id="testOutput"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 4: View Database Descriptors</h2>
+            <label>Employee ID: <input type="text" id="dbEmployeeId" value="EMP003" style="width: 150px;"></label>
+            <button onclick="viewDBDescriptors()">View Stored Descriptors</button>
+            <div class="output" id="dbOutput"></div>
+        </div>
+
+        <div class="section">
+            <h2>Debug Information</h2>
+            <div class="output" id="debugOutput" style="max-height: 500px;"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.2.5/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        const video = document.getElementById('video');
+        let currentDescriptor = null;
+        let stream = null;
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('debugOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            let prefix = '> ';
+            if (type === 'good') prefix = '✓ ';
+            if (type === 'bad') prefix = '✗ ';
+            if (type === 'warning') prefix = '⚠ ';
+            
+            output.innerHTML += `<span class="${type}">${prefix}[${timestamp}]</span> ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function loadFaceAPI() {
+            log('Checking face-api.js...');
+            if (typeof faceapi !== 'undefined') {
+                log('face-api.js is loaded', 'good');
+                
+                const modelPath = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/';
+                try {
+                    log('Loading models from CDN...');
+                    await Promise.all([
+                        faceapi.nets.ssdMobilenetv1.loadFromUri(modelPath),
+                        faceapi.nets.faceRecognitionNet.loadFromUri(modelPath),
+                        faceapi.nets.faceLandmark68Net.loadFromUri(modelPath),
+                    ]);
+                    log('All models loaded', 'good');
+                } catch (error) {
+                    log('Error loading models: ' + error.message, 'bad');
+                }
+            } else {
+                log('face-api.js NOT loaded!', 'bad');
+            }
+        }
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                log('Camera started', 'good');
+            } catch (error) {
+                log('Camera error: ' + error.message, 'bad');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                log('Camera stopped');
+            }
+        }
+
+        async function extractDescriptor() {
+            try {
+                log('Detecting face...');
+                const detection = await faceapi
+                    .detectSingleFace(video)
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (!detection) {
+                    log('No face detected', 'bad');
+                    return;
+                }
+
+                log('Face detected!', 'good');
+
+                const descriptor = detection.descriptor;
+                currentDescriptor = Array.from(descriptor);
+
+                const output = document.getElementById('extractOutput');
+                output.innerHTML = `
+<span class="good">✓ DESCRIPTOR EXTRACTED</span>
+
+<span class="stats">Type: ${typeof currentDescriptor}</span>
+<span class="stats">Length: ${currentDescriptor.length}</span>
+<span class="stats">First 10 values:</span>
+${JSON.stringify(currentDescriptor.slice(0, 10), null, 2)}
+
+<span class="stats">Last 10 values:</span>
+${JSON.stringify(currentDescriptor.slice(-10), null, 2)}
+
+<span class="stats">Min value: ${Math.min(...currentDescriptor).toFixed(6)}</span>
+<span class="stats">Max value: ${Math.max(...currentDescriptor).toFixed(6)}</span>
+<span class="stats">Average: ${(currentDescriptor.reduce((a, b) => a + b) / currentDescriptor.length).toFixed(6)}</span>
+
+<span class="warning">COPY THIS ENTIRE ARRAY TO TEST:</span>
+${JSON.stringify(currentDescriptor)}`;
+
+                document.getElementById('descriptorInput').value = JSON.stringify(currentDescriptor);
+                log('Descriptor ready for testing - ' + currentDescriptor.length + ' values', 'good');
+            } catch (error) {
+                log('Error: ' + error.message, 'bad');
+            }
+        }
+
+        function testDescriptor() {
+            try {
+                const input = document.getElementById('descriptorInput').value;
+                const descriptor = JSON.parse(input);
+                
+                if (!Array.isArray(descriptor) || descriptor.length !== 128) {
+                    log('Invalid descriptor - must be array of 128 numbers', 'bad');
+                    return;
+                }
+                
+                currentDescriptor = descriptor;
+                log('Descriptor loaded - ' + descriptor.length + ' values', 'good');
+                testAgainstDB();
+            } catch (error) {
+                log('Error parsing descriptor: ' + error.message, 'bad');
+            }
+        }
+
+        async function testAgainstDB() {
+            if (!currentDescriptor) {
+                log('No descriptor to test', 'warning');
+                return;
+            }
+
+            const employeeId = document.getElementById('employeeId').value;
+            log(`Testing descriptor against ${employeeId} in database...`);
+
+            try {
+                const response = await $.ajax({
+                    url: '/kiosk/test-descriptor',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        employee_id: employeeId,
+                        face_descriptor: currentDescriptor
+                    }),
+                    contentType: 'application/json',
+                    timeout: 10000
+                });
+
+                if (response.status === 'success') {
+                    const output = document.getElementById('testOutput');
+                    const html = `
+<span class="good">✓ TEST RESULT: ${response.matched ? 'MATCH' : 'NO MATCH'}</span>
+
+<span class="stats">Employee: ${response.employee_name}</span>
+<span class="stats">Min Distance: ${response.min_distance}</span>
+<span class="stats">Threshold: ${response.threshold}</span>
+<span class="stats">Result: ${response.matched ? '<b class="good">✓ RECOGNIZED</b>' : '<b class="bad">✗ NOT RECOGNIZED</b>'}</span>
+
+<span class="stats">All Distances:</span>
+${response.distances.map((d, i) => `Sample ${i + 1}: ${d}`).join('\n')}
+
+<span class="stats">Average Distance: ${response.avg_distance}</span>`;
+                    
+                    output.innerHTML = html;
+                    log(response.matched ? 'Descriptor matched!' : 'Descriptor did not match', 
+                        response.matched ? 'good' : 'bad');
+                } else {
+                    document.getElementById('testOutput').innerHTML = '<span class="bad">Error: ' + response.message + '</span>';
+                    log('Error: ' + response.message, 'bad');
+                }
+            } catch (error) {
+                log('Test failed: ' + error.message, 'bad');
+                document.getElementById('testOutput').innerHTML = '<span class="bad">Error: ' + error.message + '</span>';
+            }
+        }
+
+        async function viewDBDescriptors() {
+            const employeeId = document.getElementById('dbEmployeeId').value;
+            log(`Fetching descriptors for ${employeeId}...`);
+
+            try {
+                const response = await $.ajax({
+                    url: '/kiosk/view-descriptors',
+                    type: 'GET',
+                    data: { employee_id: employeeId },
+                    timeout: 10000
+                });
+
+                if (response.status === 'success') {
+                    const output = document.getElementById('dbOutput');
+                    let html = `<span class="good">✓ FOUND ${response.count} SAMPLES</span>\n\n`;
+                    
+                    html += `<span class="stats">Employee: ${response.employee_name}</span>\n`;
+                    html += `<span class="stats">Enrolled: ${response.face_enrolled ? 'YES' : 'NO'}</span>\n\n`;
+                    
+                    response.descriptors.forEach((desc, idx) => {
+                        html += `<span class="warning">Sample ${idx + 1}:</span>\n`;
+                        html += `  First 5 values: ${desc.slice(0, 5).map(v => v.toFixed(6)).join(', ')}\n`;
+                        html += `  Length: ${desc.length}\n`;
+                        html += `  Min: ${Math.min(...desc).toFixed(6)}, Max: ${Math.max(...desc).toFixed(6)}\n\n`;
+                    });
+
+                    output.innerHTML = html;
+                    log('Descriptors loaded', 'good');
+                } else {
+                    document.getElementById('dbOutput').innerHTML = '<span class="bad">Error: ' + response.message + '</span>';
+                    log('Error: ' + response.message, 'bad');
+                }
+            } catch (error) {
+                log('Failed to load descriptors: ' + error.message, 'bad');
+                document.getElementById('dbOutput').innerHTML = '<span class="bad">Error: ' + error.message + '</span>';
+            }
+        }
+    </script>
+</body>
+</html>

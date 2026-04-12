@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Descriptor Extraction Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #1a1a1a; color: #fff; }
+        video, canvas { max-width: 400px; border: 1px solid #444; margin: 10px 0; }
+        .info { background: #333; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Face-API Descriptor Extraction Test</h1>
+    
+    <div class="info">
+        <h3>Step 1: Check if face-api is loaded</h3>
+        <button onclick="checkFaceAPI()">Check face-api.js</button>
+        <div id="faceapi-status"></div>
+    </div>
+
+    <div class="info">
+        <h3>Step 2: Load Models</h3>
+        <button onclick="loadModels()">Load All Models</button>
+        <div id="models-status"></div>
+    </div>
+
+    <div class="info">
+        <h3>Step 3: Start Camera</h3>
+        <button onclick="startCamera()">Start Camera</button>
+        <button onclick="stopCamera()">Stop Camera</button>
+        <video id="video" autoplay playsinline></video>
+    </div>
+
+    <div class="info">
+        <h3>Step 4: Extract Descriptor</h3>
+        <button onclick="extractDescriptor()">Extract Single Descriptor</button>
+        <canvas id="canvas"></canvas>
+        <div id="descriptor-status"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        let stream = null;
+
+        function checkFaceAPI() {
+            const status = document.getElementById('faceapi-status');
+            if (typeof faceapi !== 'undefined') {
+                status.innerHTML = '✅ face-api.js is loaded<br>Version info available';
+            } else {
+                status.innerHTML = '❌ face-api.js NOT loaded';
+            }
+        }
+
+        async function loadModels() {
+            const status = document.getElementById('models-status');
+            status.innerHTML = 'Loading models...';
+            try {
+                const modelPath = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/';
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(modelPath),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(modelPath),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(modelPath),
+                ]);
+                status.innerHTML = '✅ All models loaded successfully';
+            } catch (error) {
+                status.innerHTML = '❌ Error loading models: ' + error.message;
+                console.error(error);
+            }
+        }
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 480, height: 360 }
+                });
+                video.srcObject = stream;
+                document.getElementById('models-status').innerHTML += '<br>✅ Camera started';
+            } catch (error) {
+                document.getElementById('models-status').innerHTML += '<br>❌ Camera error: ' + error.message;
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+        }
+
+        async function extractDescriptor() {
+            const status = document.getElementById('descriptor-status');
+            status.innerHTML = 'Detecting face...';
+            
+            try {
+                const detection = await faceapi
+                    .detectSingleFace(video)
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (!detection) {
+                    status.innerHTML = '❌ No face detected';
+                    return;
+                }
+
+                const descriptor = detection.descriptor;
+                console.log('Raw descriptor:', descriptor);
+                console.log('Descriptor type:', typeof descriptor);
+                console.log('Descriptor length:', descriptor.length);
+                console.log('First 5 values:', Array.from(descriptor).slice(0, 5));
+
+                // Convert to array
+                const descriptorArray = Array.from(descriptor);
+                
+                status.innerHTML = `✅ Descriptor extracted!<br>
+                    Length: ${descriptorArray.length}<br>
+                    Type: ${typeof descriptorArray[0]}<br>
+                    First 5 values: ${descriptorArray.slice(0, 5).map(v => v.toFixed(4)).join(', ')}<br>
+                    <br>
+                    <strong>Full descriptor (copy this):</strong><br>
+                    <textarea style="width: 100%; height: 150px;">${JSON.stringify(descriptorArray)}</textarea>`;
+
+                // Draw detection
+                const resized = await faceapi.resizeResults(detection, video);
+                const ctx = canvas.getContext('2d');
+                canvas.width = video.width;
+                canvas.height = video.height;
+                faceapi.draw.drawDetections(canvas, resized);
+
+            } catch (error) {
+                status.innerHTML = '❌ Error: ' + error.message;
+                console.error('Error details:', error);
+            }
+        }
+    </script>
+</body>
+</html>

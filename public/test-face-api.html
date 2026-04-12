@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face-API.js Test</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; }
+        #video { width: 100%; max-width: 400px; border: 2px solid blue; margin: 20px 0; }
+        #canvas { display: none; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px 5px 10px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Face-API.js Detection Test</h1>
+    
+    <div>
+        <button onclick="startCamera()">Start Camera</button>
+        <button onclick="testDetection()">Test Face Detection</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <div id="status"></div>
+    <div class="log" id="log"></div>
+
+    <script async src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <script>
+        const videoEl = document.getElementById('video');
+        const logEl = document.getElementById('log');
+        const statusEl = document.getElementById('status');
+        let modelsLoaded = false;
+        const MODEL_PATH = '/storage/models/';
+
+        function log(msg) {
+            console.log(msg);
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${timestamp}] ${msg}<br>`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function clearLog() {
+            logEl.innerHTML = '';
+        }
+
+        // Load models on page load
+        window.addEventListener('load', async () => {
+            log('📥 Loading face-api.js models...');
+            
+            if (typeof faceapi === 'undefined') {
+                log('❌ ERROR: face-api.js not loaded');
+                return;
+            }
+
+            try {
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_PATH),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_PATH),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_PATH),
+                ]);
+                modelsLoaded = true;
+                log('✓ All models loaded successfully');
+                statusEl.innerHTML = '<p style="color: green;">✓ Models ready. Start camera and test detection.</p>';
+            } catch (error) {
+                log('❌ ERROR loading models: ' + error.message);
+                statusEl.innerHTML = '<p style="color: red;">Failed to load models</p>';
+            }
+        });
+
+        async function startCamera() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                log('❌ Camera API not available');
+                return;
+            }
+
+            try {
+                log('📷 Requesting camera...');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } }
+                });
+                
+                videoEl.srcObject = stream;
+                log('✓ Camera started');
+                statusEl.innerHTML = '<p style="color: green;">✓ Camera ready</p>';
+            } catch (error) {
+                log('❌ Camera error: ' + error.message);
+                statusEl.innerHTML = '<p style="color: red;">Camera access denied</p>';
+            }
+        }
+
+        async function testDetection() {
+            if (!modelsLoaded) {
+                log('❌ Models not loaded yet');
+                return;
+            }
+
+            if (!videoEl.srcObject) {
+                log('❌ Camera not started');
+                return;
+            }
+
+            log('🔍 Testing face detection...');
+            statusEl.innerHTML = '<p style="color: orange;">Testing...</p>';
+
+            try {
+                log('  Checking video state: ' + videoEl.readyState);
+                log('  Video dimensions: ' + videoEl.videoWidth + 'x' + videoEl.videoHeight);
+                
+                if (videoEl.videoWidth === 0) {
+                    log('  ⚠️ Video not ready, waiting...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                log('  Running detection...');
+                const detection = await faceapi
+                    .detectSingleFace(videoEl)
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (!detection) {
+                    log('❌ NO FACE DETECTED');
+                    statusEl.innerHTML = '<p style="color: red;">No face detected</p>';
+                    return;
+                }
+
+                log('✓ FACE DETECTED!');
+                log('  Score: ' + detection.detection.score.toFixed(4));
+                log('  Landmarks: ' + (detection.landmarks ? detection.landmarks.positions.length : 0));
+                log('  Descriptor length: ' + (detection.descriptor ? Array.from(detection.descriptor).length : 'NONE'));
+                
+                if (detection.descriptor) {
+                    const desc = Array.from(detection.descriptor);
+                    log('  First 5 descriptor values: [' + desc.slice(0, 5).map(v => v.toFixed(4)).join(', ') + ', ...]');
+                }
+                
+                statusEl.innerHTML = '<p style="color: green;">✓ Face detected successfully!</p>';
+                
+            } catch (error) {
+                log('❌ ERROR: ' + error.message);
+                statusEl.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

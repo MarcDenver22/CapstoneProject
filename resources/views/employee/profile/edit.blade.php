@@ -70,20 +70,19 @@
                 @enderror
             </div>
 
-            <!-- Faculty ID -->
+            <!-- Employee ID -->
             <div>
-                <label for="faculty_id" class="block text-sm font-semibold text-gray-700 mb-2">Faculty ID</label>
+                <label for="employee_id" class="block text-sm font-semibold text-gray-700 mb-2">Employee ID</label>
                 <input 
                     type="text" 
-                    id="faculty_id" 
-                    name="faculty_id" 
-                    value="{{ old('faculty_id', $user->faculty_id) }}" 
-                    placeholder="2026-001"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('faculty_id') border-red-500 @enderror"
+                    id="employee_id" 
+                    name="employee_id" 
+                    value="{{ $user->employee_id ?? 'N/A' }}" 
+                    placeholder="EMP001"
+                    disabled
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
                 >
-                @error('faculty_id')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
+                <p class="text-gray-500 text-xs mt-1">Your Employee ID is auto-generated and cannot be changed</p>
             </div>
 
             <!-- Position and Department -->

@@ -230,6 +230,35 @@
             border-color: rgba(239, 68, 68, 0.6);
         }
 
+        .back-home-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 12px;
+            background: rgba(156, 163, 175, 0.2);
+            border: 1px solid rgba(156, 163, 175, 0.4);
+            color: #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+        }
+
+        .back-home-button:hover {
+            background: rgba(156, 163, 175, 0.35);
+            border-color: rgba(156, 163, 175, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .scanner-card {
+            position: relative;
+        }
+
         .employee-info {
             display: none;
             margin-bottom: 40px;
@@ -280,8 +309,18 @@
 <body>
     <div class="container">
         <div class="scanner-card">
+            <button class="back-home-button" id="backHomeButton" title="Go back to home">←</button>
             <div class="title">📷 Attendance Scanner</div>
-            <div class="subtitle">Scan your face to record attendance</div>
+            <div class="subtitle">Face Recognition System</div>
+
+            <!-- Registration Number Input -->
+            <div id="loginForm" style="margin-bottom: 30px; padding: 20px; background: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 16px;">
+                <label style="display: block; color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Enter Your Employee ID</label>
+                <input type="text" id="employeeIdInput" placeholder="e.g., EMP001" style="width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 8px; color: white; font-size: 16px; margin-bottom: 12px;" autocomplete="off">
+                <button id="findUserBtn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                    Find Employee
+                </button>
+            </div>
 
             <div class="employee-info" id="employeeInfo">
                 <div class="checkmark-icon">✓</div>
@@ -293,177 +332,33 @@
             <div class="camera-preview-container" id="cameraContainer">
                 <div class="preview-wrapper">
                     <video id="videoPreview" autoplay playsinline muted></video>
+                    <canvas id="detectionCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
                     <div class="preview-overlay"></div>
                 </div>
-                <div class="instructions">📷 Please face the camera and hold still</div>
+                <div class="instructions" id="instructions">
+                    �️ Please face the camera and blink your eyes to record attendance
+                </div>
+                <div id="detectionInfo" style="color: #60a5fa; font-size: 14px; margin-top: 10px; display: none;">
+                    <span id="faceDetectionStatus">Detecting...</span>
+                </div>
             </div>
 
             <button class="scan-button" id="scanButton">
-                <span>📱 SCAN FACE</span>
+                <span>📱 START DETECTION</span>
             </button>
 
             <div class="status-message" id="statusMessage"></div>
 
-            <form action="{{ route('kiosk.logout') }}" method="POST" style="width: 100%;">
-                @csrf
-                <button type="submit" class="exit-button">Exit Kiosk</button>
-            </form>
-        </div>
     </div>
 
-    <script>
-        const scanButton = document.getElementById('scanButton');
-        const videoPreview = document.getElementById('videoPreview');
-        const cameraContainer = document.getElementById('cameraContainer');
-        const statusMessage = document.getElementById('statusMessage');
-        const employeeInfo = document.getElementById('employeeInfo');
-        const employeeName = document.getElementById('employeeName');
-        const employeeDetails = document.getElementById('employeeDetails');
+    <!-- Include face-api.js library -->
+    <script async src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
-        let stream = null;
-        let isScanning = false;
-        let cooldownActive = false;
-        const SCAN_DELAY = 1000;
-        const COOLDOWN_DURATION = 5000;
+    <!-- Include jQuery for AJAX -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-        async function startCamera() {
-            try {
-                console.log('Requesting camera access...');
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-                    audio: false
-                });
+    <!-- CSRF Token for security -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-                videoPreview.srcObject = stream;
-                console.log('Camera stream started');
-
-                videoPreview.onloadedmetadata = function() {
-                    console.log('Video playing');
-                    videoPreview.play();
-                };
-
-                cameraContainer.classList.add('active');
-                showStatus('Face the camera and hold still', 'scanning');
-
-            } catch (error) {
-                console.error('Camera error:', error.name, error.message);
-                let msg = 'Camera access failed: ';
-                if (error.name === 'NotAllowedError') msg += 'Permission denied. Allow camera in browser settings.';
-                else if (error.name === 'NotFoundError') msg += 'No camera device found.';
-                else msg += error.message;
-                showStatus(msg, 'error');
-            }
-        }
-
-        function stopCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-                cameraContainer.classList.remove('active');
-            }
-        }
-
-        function captureFrame() {
-            return new Promise((resolve) => {
-                const canvas = document.createElement('canvas');
-                canvas.width = videoPreview.videoWidth;
-                canvas.height = videoPreview.videoHeight;
-                const context = canvas.getContext('2d');
-                context.drawImage(videoPreview, 0, 0);
-                resolve(canvas.toDataURL('image/jpeg', 0.9));
-            });
-        }
-
-        function showStatus(message, type = 'info') {
-            statusMessage.textContent = message;
-            statusMessage.className = 'status-message show ' + type;
-        }
-
-        function setCooldown() {
-            cooldownActive = true;
-            scanButton.disabled = true;
-            let remaining = COOLDOWN_DURATION / 1000;
-
-            const timer = setInterval(() => {
-                remaining--;
-                scanButton.textContent = '📱 SCAN (' + remaining + 's)';
-                if (remaining <= 0) {
-                    clearInterval(timer);
-                    scanButton.textContent = '📱 SCAN FACE';
-                    scanButton.disabled = false;
-                    cooldownActive = false;
-                }
-            }, 1000);
-        }
-
-        scanButton.addEventListener('click', async () => {
-            console.log('Scan button clicked');
-            if (isScanning || cooldownActive) return;
-
-            isScanning = true;
-            scanButton.disabled = true;
-
-            try {
-                await startCamera();
-                await new Promise(resolve => setTimeout(resolve, SCAN_DELAY));
-                showStatus('Capturing...', 'scanning');
-                const imageBase64 = await captureFrame();
-                stopCamera();
-
-                showStatus('Processing...', 'scanning');
-                
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
-                    || document.querySelector('input[name="_token"]')?.value;
-                
-                if (!csrfToken) {
-                    console.error('CSRF token not found');
-                    showStatus('Security error: CSRF token missing', 'error');
-                    scanButton.disabled = false;
-                    return;
-                }
-
-                const response = await fetch('/kiosk/scan', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({ image: imageBase64 })
-                });
-
-                const data = await response.json();
-                if (data.status === 'success') {
-                    // Display employee info
-                    const fullMessage = data.message;
-                    const nameMatch = fullMessage.match(/Attendance recorded for (.+)$/);
-                    const displayName = nameMatch ? nameMatch[1] : 'Employee';
-                    
-                    employeeName.textContent = displayName;
-                    employeeDetails.textContent = 
-                        (data.period === 'AM' ? '🌅 Morning' : '🌆 Afternoon') + ' - ' + 
-                        (data.punch_type === 'IN' ? 'Punch IN' : 'Punch OUT') + ' ✓';
-                    
-                    employeeInfo.classList.add('show');
-                    showStatus('✓ ' + data.message, 'success');
-                    
-                    // Hide employee info after a few seconds when starting new scan
-                    setTimeout(() => {
-                        employeeInfo.classList.remove('show');
-                    }, COOLDOWN_DURATION - 1000);
-                } else {
-                    showStatus('✗ ' + data.message, 'error');
-                }
-                setCooldown();
-
-            } catch (error) {
-                console.error('Error:', error);
-                showStatus('Error occurred: ' + error.message, 'error');
-                stopCamera();
-                scanButton.disabled = false;
-            } finally {
-                isScanning = false;
-            }
-        });
-    </script>
-</body>
-</html>
+    <!-- Load scanner module -->
+    <script src="/js/face-scanner.js"></script>

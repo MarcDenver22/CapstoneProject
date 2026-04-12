@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\AttendanceLog;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -29,87 +30,259 @@ class KioskScanController extends Controller
     }
 
     /**
-     * Handle face scan and attendance recording
+     * Find and set user by employee ID
+     * This allows the kiosk to identify which employee is scanning
+     */
+    public function findUser(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'employee_id' => 'required|string',
+            ]);
+
+            $user = User::where('employee_id', $validated['employee_id'])->first();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Employee ID not found. Check your ID.',
+                ], 404);
+            }
+
+            if (!$user->face_enrolled) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'You have not completed face enrollment. Please enroll first.',
+                ], 400);
+            }
+
+            // Set the user in session for the scan process
+            session(['kiosk_user' => $user]);
+
+            return response()->json([
+                'status' => 'success',
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'message' => 'User found. Please look at the camera.',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Find user error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error finding user: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get current user's face descriptors for client-side matching
+     */
+    public function getUserDescriptor(Request $request): JsonResponse
+    {
+        try {
+            // Get user from session or auth
+            $user = session('kiosk_user');
+            
+            if (!$user || !$user instanceof User) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No user authenticated'
+                ], 401);
+            }
+
+            // Check if user has face enrollment
+            if (!$user->face_enrolled || !$user->face_encodings) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User has not completed face enrollment'
+                ], 400);
+            }
+
+            // Get face descriptors (already 128-dimensional arrays)
+            $descriptors = json_decode($user->face_encodings, true);
+            if (!is_array($descriptors) || empty($descriptors)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No face data found'
+                ], 400);
+            }
+
+            // Average all descriptors for more robust matching
+            // This improves accuracy across different lighting/angles
+            $averageDescriptor = $this->averageDescriptors($descriptors);
+
+            return response()->json([
+                'status' => 'success',
+                'employee_id' => $user->employee_id,
+                'name' => $user->name,
+                'descriptor' => $averageDescriptor,
+                'sample_count' => count($descriptors)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Get descriptor error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to load descriptor'
+            ], 500);
+        }
+    }
+
+    /**
+     * Average multiple face descriptors for more robust matching
+     */
+    private function averageDescriptors(array $descriptors): array
+    {
+        if (empty($descriptors)) {
+            return [];
+        }
+
+        // Initialize sum array with 128 zeros
+        $sum = array_fill(0, 128, 0);
+
+        // Sum all descriptors
+        foreach ($descriptors as $descriptor) {
+            if (is_array($descriptor) && count($descriptor) === 128) {
+                for ($i = 0; $i < 128; $i++) {
+                    $sum[$i] += (float)$descriptor[$i];
+                }
+            }
+        }
+
+        // Calculate average
+        $count = count($descriptors);
+        for ($i = 0; $i < 128; $i++) {
+            $sum[$i] = $sum[$i] / $count;
+        }
+
+        return $sum;
+    }
+
+    /**
+     * Extract descriptor from base64 encoded face image (DEPRECATED)
+     */
+    private function extractDescriptorFromBase64($base64Data): array
+    {
+        // This method is deprecated. Descriptors are now extracted client-side.
+        // Keeping for backward compatibility only.
+        // Generate descriptor from base64 hash
+        $hash = hash('sha256', $base64Data);
+        $descriptor = [];
+        
+        for ($i = 0; $i < 128; $i++) {
+            $hexPair = substr($hash, $i * 2, 2);
+            $value = (hexdec($hexPair) / 255) * 2 - 1; // Convert to -1 to 1 range
+            $descriptor[] = (float)$value;
+        }
+        
+        return $descriptor;
+    }
+
+    /**
+     * Record attendance based on face descriptor match
      */
     public function scan(Request $request): JsonResponse
     {
         try {
-            // Validate request
+            // Validate face descriptor from client
             $validated = $request->validate([
-                'image' => 'required|string',
+                'face_descriptor' => 'required|array|size:128',
+                'user_id' => 'required|integer',
             ]);
 
-            // Decode and save temporary image
-            $imageBase64 = $validated['image'];
-            if (strpos($imageBase64, 'data:image') === 0) {
-                $imageBase64 = substr($imageBase64, strpos($imageBase64, ',') + 1);
+            // Get the user from session (they already logged in with employee ID)
+            $user = User::find($validated['user_id']);
+            if (!$user) {
+                Log::error('Kiosk scan: User not found', ['user_id' => $validated['user_id']]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User not found',
+                ], 404);
             }
 
-            $imageData = base64_decode($imageBase64, true);
-            if (!$imageData) {
+            // Verify user is enrolled
+            if (!$user->face_enrolled) {
+                Log::warning('Kiosk scan: User not enrolled', ['user_id' => $user->id, 'name' => $user->name]);
                 return response()->json([
-                    'status' => 'fail',
-                    'message' => 'Invalid image data',
+                    'status' => 'error',
+                    'message' => 'User not enrolled for face recognition',
                 ], 400);
             }
 
-            // Save temporary image for processing
-            $tempPath = storage_path('temp/scans/' . uniqid() . '.jpg');
-            @mkdir(dirname($tempPath), 0755, true);
-            file_put_contents($tempPath, $imageData);
-
-            // Call face recognition service
-            $recognition = $this->faceRecognition->recognize($tempPath);
-
-            // Clean up temp file
-            @unlink($tempPath);
-
-            // If recognition failed or not recognized
-            if (!$recognition['recognized']) {
-                $this->logAuditTrail(null, 'scan_failed', 'Face not recognized', $request->ip());
-
+            // Get enrolled descriptors
+            $enrolledDescriptors = json_decode($user->face_encodings, true);
+            if (!is_array($enrolledDescriptors) || empty($enrolledDescriptors)) {
+                Log::warning('Kiosk scan: No face data found', ['user_id' => $user->id]);
                 return response()->json([
-                    'status' => 'fail',
+                    'status' => 'error',
+                    'message' => 'No face data found for user',
+                ], 400);
+            }
+
+            // Convert descriptor array to proper format
+            $liveDescriptor = array_map('floatval', $validated['face_descriptor']);
+            
+            // Log the descriptor info for debugging
+            Log::info('Kiosk scan: Received descriptor', [
+                'user_id' => $user->id,
+                'descriptor_length' => count($liveDescriptor),
+                'first_5_values' => array_slice($liveDescriptor, 0, 5),
+                'descriptor_type' => gettype($liveDescriptor[0]),
+            ]);
+
+            // Calculate distance between live descriptor and enrolled descriptors
+            $minDistance = PHP_FLOAT_MAX;
+            $distances = [];
+            foreach ($enrolledDescriptors as $idx => $enrolled) {
+                if (!is_array($enrolled)) {
+                    continue;
+                }
+                $enrolled = array_map('floatval', $enrolled);
+                $distance = $this->euclideanDistance($liveDescriptor, $enrolled);
+                $distances[] = $distance;
+                if ($distance < $minDistance) {
+                    $minDistance = $distance;
+                }
+            }
+
+            // Euclidean distance threshold: < 0.6 is typically a good match
+            $threshold = 0.6;
+            $confidence = 1 - min($minDistance / 1.0, 1.0); // Convert distance to confidence score
+
+            Log::info('Face matching result', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'min_distance' => number_format($minDistance, 4),
+                'avg_distance' => number_format(array_sum($distances) / count($distances), 4),
+                'all_distances' => array_map(fn($d) => number_format($d, 4), $distances),
+                'confidence' => number_format($confidence, 4),
+                'threshold' => $threshold,
+                'matched' => $minDistance < $threshold,
+            ]);
+
+            if ($minDistance >= $threshold) {
+                $this->logAuditTrail($user->id, 'scan_failed', 'Face not matched (distance: ' . round($minDistance, 4) . ')', $request->ip());
+                Log::warning('Kiosk scan: Face not matched', [
+                    'user_id' => $user->id,
+                    'min_distance' => $minDistance,
+                    'threshold' => $threshold,
+                ]);
+                return response()->json([
+                    'status' => 'error',
                     'message' => 'Face not recognized. Please try again.',
-                    'action_recorded' => 'none',
-                    'timestamp' => now()->toIso8601String(),
-                ]);
+                ], 400);
             }
 
-            // Get employee
-            $employee = User::find($recognition['employee_id']);
-            if (!$employee) {
-                $this->logAuditTrail($recognition['employee_id'], 'scan_failed', 'Employee not found', $request->ip());
-
-                return response()->json([
-                    'status' => 'fail',
-                    'message' => 'Employee record not found.',
-                    'action_recorded' => 'none',
-                    'timestamp' => now()->toIso8601String(),
-                ]);
-            }
-
-            // Check liveness
-            if (!$recognition['liveness_passed']) {
-                $this->logAuditTrail($employee->id, 'scan_failed', 'Liveness check failed', $request->ip());
-
-                return response()->json([
-                    'status' => 'fail',
-                    'message' => 'Liveness verification failed. Please look at the camera.',
-                    'action_recorded' => 'none',
-                    'timestamp' => now()->toIso8601String(),
-                ]);
-            }
-
-            // Determine punch type based on current time
+            // Face matched! Record attendance
             $now = Carbon::now();
             $hour = $now->hour;
 
             // AM: before 12pm, PM: 12pm and after
             $period = $hour < 12 ? 'AM' : 'PM';
-            
+
             // Check if employee already punched in/out for this period
-            $lastLog = AttendanceLog::where('employee_id', $employee->id)
+            $lastLog = AttendanceLog::where('employee_id', $user->id)
                 ->where('log_date', $now->toDateString())
                 ->where('period', $period)
                 ->orderBy('punched_at', 'desc')
@@ -117,7 +290,6 @@ class KioskScanController extends Controller
 
             // Determine punch type
             if ($lastLog) {
-                // If last was IN, mark as OUT. If OUT or none, mark as IN
                 $punchType = $lastLog->punch_type === 'IN' ? 'OUT' : 'IN';
             } else {
                 $punchType = 'IN';
@@ -125,41 +297,88 @@ class KioskScanController extends Controller
 
             // Save attendance log
             $log = AttendanceLog::create([
-                'employee_id' => $employee->id,
+                'employee_id' => $user->id,
                 'log_date' => $now->toDateString(),
                 'period' => $period,
                 'punch_type' => $punchType,
                 'punched_at' => $now,
                 'method' => 'face_recognition',
-                'confidence' => $recognition['confidence'] ?? 0.95,
+                'confidence' => round($confidence, 4),
                 'liveness_passed' => true,
-                'photo_path' => null, // TODO: store actual photo if needed
-                'notes' => 'Kiosk scan - ' . strtoupper($punchType),
+                'notes' => 'Kiosk face scan - ' . strtoupper($punchType),
             ]);
+
+            // Update DTR (Daily Time Record)
+            $dtr = Attendance::firstOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'attendance_date' => $now->toDateString(),
+                ],
+                [
+                    'status' => 'present',
+                    'liveness_verified' => true,
+                ]
+            );
+
+            // Update period-specific times
+            if ($period === 'AM') {
+                if ($punchType === 'IN') {
+                    // Morning arrival
+                    if (!$dtr->am_arrival) {
+                        $dtr->am_arrival = $now;
+                    }
+                } else {
+                    // Lunch departure (AM departure)
+                    $dtr->am_departure = $now;
+                }
+            } else {
+                // PM period
+                if ($punchType === 'IN') {
+                    // Afternoon arrival
+                    if (!$dtr->pm_arrival) {
+                        $dtr->pm_arrival = $now;
+                    }
+                } else {
+                    // End of day departure (PM departure)
+                    $dtr->pm_departure = $now;
+                }
+            }
+
+            // Keep time_in and time_out for backward compatibility
+            // time_in = earliest arrival (am_arrival)
+            if (!$dtr->time_in && $dtr->am_arrival) {
+                $dtr->time_in = $dtr->am_arrival;
+            }
+            
+            // time_out = latest departure (pm_departure, or am_departure if no pm_departure)
+            if ($dtr->pm_departure) {
+                $dtr->time_out = $dtr->pm_departure;
+            } elseif ($dtr->am_departure) {
+                $dtr->time_out = $dtr->am_departure;
+            }
+
+            $dtr->save();
 
             // Log audit trail
             $this->logAuditTrail(
-                $employee->id,
+                $user->id,
                 'scan_success',
-                "Attendance recorded: {$period} {$punchType}",
+                "Face scan: {$period} {$punchType} (distance: {$minDistance}, confidence: {$confidence})",
                 $request->ip()
             );
 
-            // Format employee name for privacy (first name only or name initials)
-            $employeeName = $employee->name;
-            if (strpos($employeeName, ' ') !== false) {
-                $parts = explode(' ', $employeeName, 2);
-                $employeeName = $parts[0] . ' ' . substr($parts[1], 0, 1) . '.';
-            }
-
             return response()->json([
                 'status' => 'success',
-                'message' => "Attendance recorded for {$employeeName}",
-                'action_recorded' => strtolower($period) . '_' . strtolower($punchType),
-                'timestamp' => $now->toIso8601String(),
-                'employee_id' => $employee->id,
+                'message' => "Attendance recorded for {$user->name}",
+                'name' => $user->name,
+                'user_id' => $user->id,
                 'period' => $period,
                 'punch_type' => $punchType,
+                'confidence' => round($confidence, 4),
+                'distance' => round($minDistance, 4),
+                'time_in' => $dtr->time_in ? $dtr->time_in->format('h:i A') : null,
+                'time_out' => $dtr->time_out ? $dtr->time_out->format('h:i A') : null,
+                'attendance_date' => $dtr->attendance_date,
             ]);
 
         } catch (\Exception $e) {
@@ -168,12 +387,28 @@ class KioskScanController extends Controller
             ]);
 
             return response()->json([
-                'status' => 'fail',
-                'message' => 'An error occurred during scanning. Please try again.',
-                'action_recorded' => 'none',
-                'timestamp' => now()->toIso8601String(),
+                'status' => 'error',
+                'message' => 'Error during face matching: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Calculate Euclidean distance between two 128-d descriptors
+     */
+    private function euclideanDistance(array $descriptor1, array $descriptor2): float
+    {
+        if (count($descriptor1) !== count($descriptor2)) {
+            return PHP_FLOAT_MAX;
+        }
+
+        $sum = 0.0;
+        for ($i = 0; $i < count($descriptor1); $i++) {
+            $diff = $descriptor1[$i] - $descriptor2[$i];
+            $sum += $diff * $diff;
+        }
+
+        return sqrt($sum);
     }
 
     /**
@@ -190,6 +425,101 @@ class KioskScanController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::warning('Failed to log audit trail: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * DEBUG: Test a descriptor against enrolled samples
+     */
+    public function testDescriptor(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'employee_id' => 'required|string',
+                'face_descriptor' => 'required|array|size:128',
+            ]);
+
+            $user = User::where('employee_id', $validated['employee_id'])->first();
+            if (!$user || !$user->face_enrolled) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User not found or not enrolled',
+                ]);
+            }
+
+            $enrolledDescriptors = json_decode($user->face_encodings, true);
+            $liveDescriptor = array_map('floatval', $validated['face_descriptor']);
+            
+            $minDistance = PHP_FLOAT_MAX;
+            $distances = [];
+            
+            foreach ($enrolledDescriptors as $enrolled) {
+                $enrolled = array_map('floatval', $enrolled);
+                $distance = $this->euclideanDistance($liveDescriptor, $enrolled);
+                $distances[] = round($distance, 4);
+                if ($distance < $minDistance) {
+                    $minDistance = $distance;
+                }
+            }
+
+            $threshold = 0.6;
+            $matched = $minDistance < $threshold;
+            
+            return response()->json([
+                'status' => 'success',
+                'employee_name' => $user->name,
+                'matched' => $matched,
+                'min_distance' => round($minDistance, 4),
+                'avg_distance' => round(array_sum($distances) / count($distances), 4),
+                'distances' => $distances,
+                'threshold' => $threshold,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * DEBUG: View stored descriptors for an employee
+     */
+    public function viewDescriptors(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'employee_id' => 'required|string',
+            ]);
+
+            $user = User::where('employee_id', $validated['employee_id'])->first();
+            if (!$user) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'User not found',
+                ]);
+            }
+
+            $descriptors = [];
+            if ($user->face_enrolled) {
+                $encodings = json_decode($user->face_encodings, true);
+                foreach ($encodings as $encoding) {
+                    $descriptors[] = array_map('floatval', $encoding);
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'employee_name' => $user->name,
+                'face_enrolled' => $user->face_enrolled,
+                'count' => count($descriptors),
+                'descriptors' => $descriptors,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 }

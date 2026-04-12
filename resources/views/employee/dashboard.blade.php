@@ -33,7 +33,7 @@
                 </div>
                 <div class="flex-1">
                     <h2 class="text-4xl font-bold text-gray-900 mb-1">{{ $user->name }}</h2>
-                    <p class="text-gray-600 text-lg font-medium mb-4">{{ $profile['position'] ?? 'N/A' }} • <span class="text-gray-500">{{ $profile['faculty_id'] ?? 'N/A' }}</span> • <span class="text-gray-500">{{ $profile['department'] ?? 'N/A' }}</span></p>
+                    <p class="text-gray-600 text-lg font-medium mb-4">{{ $profile['position'] ?? 'N/A' }} • <span class="text-gray-500">{{ $profile['employee_id'] ?? 'N/A' }}</span> • <span class="text-gray-500">{{ $profile['department'] ?? 'N/A' }}</span></p>
                     
                     <div class="flex items-center gap-3 mt-6 flex-wrap">
                         @if($user->face_enrolled)

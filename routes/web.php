@@ -46,6 +46,12 @@ Route::middleware('kiosk.ip.allowlist')->group(function () {
     // Kiosk scan page (camera-based face scan)
     Route::get('/kiosk/scan', [KioskScanController::class, 'index'])->name('kiosk.scan');
     Route::post('/kiosk/scan', [KioskScanController::class, 'scan'])->name('kiosk.scan');
+    Route::post('/kiosk/find-user', [KioskScanController::class, 'findUser'])->name('kiosk.find-user');
+    Route::get('/kiosk/get-user-descriptor', [KioskScanController::class, 'getUserDescriptor'])->name('kiosk.get-descriptor');
+    
+    // Debug endpoints (for troubleshooting)
+    Route::post('/kiosk/test-descriptor', [KioskScanController::class, 'testDescriptor'])->name('kiosk.test-descriptor');
+    Route::get('/kiosk/view-descriptors', [KioskScanController::class, 'viewDescriptors'])->name('kiosk.view-descriptors');
 });
 
 // Protected routes
@@ -135,6 +141,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/face-enrollment/complete', [FaceEnrollmentController::class, 'complete'])->name('employee.face.complete');
     Route::get('/face-enrollment/status', [FaceEnrollmentController::class, 'status'])->name('employee.face.status');
     Route::post('/face-enrollment/reset', [FaceEnrollmentController::class, 'reset'])->name('employee.face.reset');
+
+
 
     // HR Dashboard
     Route::middleware('role:hr')->group(function () {

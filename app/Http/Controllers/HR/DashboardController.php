@@ -71,32 +71,36 @@ class DashboardController extends Controller
             $daysData[$day] = [];
 
             if ($dayRecords && $dayRecords->count() > 0) {
-                // Get the first and last record for the day
+                // Get first record for the day
+                $record = $dayRecords->first();
                 $firstRecord = $dayRecords->first();
                 $lastRecord = $dayRecords->last();
 
-                // A.M. Arrival (first time_in of the day)
-                if ($firstRecord->time_in) {
-                    $timeIn = \Carbon\Carbon::parse($firstRecord->time_in);
+                // A.M. Arrival
+                if ($record->am_arrival) {
+                    $timeIn = \Carbon\Carbon::parse($record->am_arrival);
                     $daysData[$day]['am_arrival'] = $timeIn->format('H:i');
                 }
 
-                // A.M. Departure (noon - 12:00)
-                $daysData[$day]['am_depart'] = '12:00';
+                // A.M. Departure
+                $daysData[$day]['am_depart'] = $record->am_departure 
+                    ? \Carbon\Carbon::parse($record->am_departure)->format('H:i') 
+                    : '—';
 
-                // P.M. Arrival (afternoon - 13:00)
-                $daysData[$day]['pm_arrival'] = '13:00';
+                // P.M. Arrival
+                $daysData[$day]['pm_arrival'] = $record->pm_arrival 
+                    ? \Carbon\Carbon::parse($record->pm_arrival)->format('H:i') 
+                    : '—';
 
-                // P.M. Departure (last time_out of the day)
-                if ($lastRecord->time_out) {
-                    $timeOut = \Carbon\Carbon::parse($lastRecord->time_out);
-                    $daysData[$day]['pm_depart'] = $timeOut->format('H:i');
-                }
+                // P.M. Departure
+                $daysData[$day]['pm_depart'] = $record->pm_departure 
+                    ? \Carbon\Carbon::parse($record->pm_departure)->format('H:i') 
+                    : '—';
 
                 // Calculate undertime
-                if ($firstRecord->time_in && $lastRecord->time_out) {
-                    $timeIn = \Carbon\Carbon::parse($firstRecord->time_in);
-                    $timeOut = \Carbon\Carbon::parse($lastRecord->time_out);
+                if ($record->am_arrival && $record->pm_departure) {
+                    $timeIn = \Carbon\Carbon::parse($record->am_arrival);
+                    $timeOut = \Carbon\Carbon::parse($record->pm_departure);
                     $expected_minutes = 480; // 8 hours
                     $actual_minutes = $timeIn->diffInMinutes($timeOut);
                     $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
@@ -116,6 +120,10 @@ class DashboardController extends Controller
                         $daysData[$day]['undertime_hours'] = 0;
                         $daysData[$day]['undertime_minutes'] = 0;
                     }
+                } else {
+                    // If no time_in or time_out recorded yet, set undertime to 0
+                    $daysData[$day]['undertime_hours'] = 0;
+                    $daysData[$day]['undertime_minutes'] = 0;
                 }
             }
         }

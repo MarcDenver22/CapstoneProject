@@ -83,10 +83,24 @@
     </div>
 </div>
 
+<!-- Include jQuery & face-api -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script async defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
 <script>
-const video = document.getElementById('cameraFeed');
-const canvas = document.getElementById('faceCanvas');
-const ctx = canvas.getContext('2d');
+// ==================== JQUERY AJAX SETUP ====================
+$.ajaxSetup({
+    timeout: 10000,
+    dataType: 'json',
+    headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+    }
+});
+
+let modelsLoaded = false;
+const MODEL_PATH = '/storage/models/';
+
 const captureBtn = document.getElementById('captureBtn');
 const resetBtn = document.getElementById('resetBtn');
 const completeBtn = document.getElementById('completeBtn');
@@ -95,8 +109,37 @@ const progressBar = document.getElementById('progressBar');
 const sampleCount = document.getElementById('sampleCount');
 const captureIndicator = document.getElementById('captureIndicator');
 
+// Load face-api models on page load
+window.addEventListener('load', async () => {
+    if (typeof faceapi === 'undefined') {
+        console.error('❌ face-api.js not loaded');
+        return;
+    }
+    
+    try {
+        console.log('📥 Loading face detection models...');
+        await Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_PATH),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_PATH),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_PATH),
+        ]);
+        modelsLoaded = true;
+        console.log('✓ Face detection models loaded successfully');
+        
+        // Auto-initialize camera when models are loaded
+        console.log('📷 Initializing camera...');
+        await initCamera();
+    } catch (error) {
+        console.error('❌ Failed to load models or initialize camera:', error);
+    }
+});
+
 let samples = [];
 let initialCount = {{ auth()->user()->face_samples_count ?? 0 }};
+
+// Get DOM elements
+const video = document.getElementById('cameraFeed');
+const canvas = document.getElementById('faceCanvas');
 
 async function initCamera() {
     try {
@@ -147,109 +190,175 @@ async function initCamera() {
 }
 
 captureBtn.addEventListener('click', async () => {
-    // If camera not initialized, try initializing first
+    console.log('📸 Capture button clicked');
+    
+    // Ensure camera is ready
     if (!video.srcObject) {
-        console.log('Camera not ready, initializing...');
+        console.log('⚠️ Camera not ready, initializing...');
         await initCamera();
-        // Wait a moment for camera to initialize
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    // Check if we have a video stream
     if (!video.srcObject) {
-        alert('Camera is not ready. Please refresh the page and allow camera access.');
+        alert('❌ Camera is not ready. Please refresh the page and allow camera access.');
         return;
     }
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    if (!modelsLoaded) {
+        alert('⏳ Face detection models still loading. Please wait...');
+        return;
+    }
+
+    // Check if video is actually playing
+    if (video.paused || video.ended) {
+        console.warn('⚠️ Video is not playing, trying to play...');
+        try {
+            await video.play();
+        } catch (e) {
+            console.error('❌ Could not play video:', e);
+            alert('❌ Video could not be played. Please refresh the page.');
+            return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    console.log(`📹 Video dimensions: ${video.videoWidth}x${video.videoHeight}`);
+    
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+        console.error('❌ Video has no dimensions yet, waiting...');
+        alert('Video is still loading. Please try again in a moment.');
+        return;
+    }
+
+    console.log('🔍 Starting face detection...');
     captureIndicator.classList.remove('hidden');
     captureBtn.disabled = true;
 
     try {
-        const response = await fetch('{{ route("employee.face.save_sample") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ face_sample: imageData })
-        });
-
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers.get('content-type'));
-
-        // Check if response is JSON
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const textResponse = await response.text();
-            console.error('Server returned non-JSON:', textResponse.substring(0, 200));
-            throw new Error('Server error: ' + response.statusText + ' (check console for details)');
-        }
-
-        const data = await response.json();
+        console.log('🔍 Detecting face in video...');
         
-        if (!response.ok) {
-            console.error('API error:', data);
-            throw new Error(data.message || 'Failed to save sample');
+        // Add timeout wrapper
+        const detectionPromise = faceapi
+            .detectSingleFace(video)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+        
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Face detection timed out after 10 seconds')), 10000)
+        );
+        
+        const detection = await Promise.race([detectionPromise, timeoutPromise]);
+
+        if (!detection || !detection.descriptor) {
+            console.warn('⚠️ No face detected in frame');
+            alert('⚠️ No face detected. Ensure:\n✓ Good lighting\n✓ Face is 30-60cm from camera\n✓ Face is centered in frame');
+            captureIndicator.classList.add('hidden');
+            captureBtn.disabled = false;
+            return;
         }
 
-        if (data.success) {
-            samples.push(imageData);
-            updateUI(data.sample_count);
-            console.log('Sample saved successfully');
-        } else {
-            alert('Error: ' + (data.message || 'Failed to save sample'));
-        }
+        console.log('✓ Face detected, descriptor extracted');
+        console.log('  Detection confidence:', detection.detection.score);
+        // Convert Float32Array to regular array for JSON serialization
+        const descriptorArray = Array.from(detection.descriptor);
+        console.log('  Descriptor length:', descriptorArray.length);
+        console.log('📤 Sending descriptor to server...');
+
+        // Send descriptor to server
+        $.ajax({
+            url: '{{ route("employee.face.save_sample") }}',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ face_descriptor: descriptorArray }),
+            timeout: 15000,
+            success: function(data) {
+                console.log('✓ Server response:', data);
+                if (data.success) {
+                    samples.push(descriptorArray);
+                    updateUI(data.sample_count);
+                    console.log('✓ Sample ' + data.sample_count + ' saved successfully');
+                    alert('✓ Sample ' + data.sample_count + ' captured! ' + (10 - data.sample_count) + ' more to go.');
+                } else {
+                    console.error('❌ Server error:', data.message);
+                    alert('❌ Error: ' + (data.message || 'Failed to save sample'));
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = error;
+                
+                if (status === 'timeout') {
+                    errorMsg = 'Request timeout. Please try again.';
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                } else if (xhr.status >= 400) {
+                    errorMsg = 'Server error (' + xhr.status + '). Response: ' + xhr.responseText;
+                }
+                
+                console.error('❌ AJAX Error:', status, ':', errorMsg);
+                alert('❌ Error: ' + errorMsg);
+            },
+            complete: function() {
+                captureIndicator.classList.add('hidden');
+                captureBtn.disabled = false;
+            }
+        });
     } catch (error) {
-        console.error('Capture error:', error);
-        alert('Error: ' + error.message);
-    } finally {
+        console.error('❌ Detection error:', error.message, error);
+        alert('❌ Error: ' + error.message);
         captureIndicator.classList.add('hidden');
         captureBtn.disabled = false;
     }
 });
 
-resetBtn.addEventListener('click', async () => {
+resetBtn.addEventListener('click', () => {
     if (confirm('Reset all samples?')) {
-        try {
-            await fetch('{{ route("employee.face.reset") }}', {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-            });
-            samples = [];
-            initialCount = 0;
-            updateUI(0);
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
+        $.ajax({
+            url: '{{ route("employee.face.reset") }}',
+            type: 'POST',
+            timeout: 8000,
+            success: function(data) {
+                samples = [];
+                initialCount = 0;
+                updateUI(0);
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = error;
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                alert('Error: ' + errorMsg);
+            }
+        });
     }
 });
 
-completeBtn.addEventListener('click', async () => {
+completeBtn.addEventListener('click', () => {
     const totalSamples = initialCount + samples.length;
     if (totalSamples < 3) {
         alert('Please capture at least 3 samples');
         return;
     }
 
-    try {
-        const response = await fetch('{{ route("employee.face.complete") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+    $.ajax({
+        url: '{{ route("employee.face.complete") }}',
+        type: 'POST',
+        contentType: 'application/json',
+        timeout: 8000,
+        success: function(data) {
+            if (data.success) {
+                window.location.href = data.redirect || '{{ route("employee.dashboard") }}';
+            } else {
+                alert('Error: ' + (data.message || 'Failed to complete enrollment'));
             }
-        });
-        const data = await response.json();
-        if (data.success) {
-            window.location.href = data.redirect || '{{ route("employee.dashboard") }}';
-        } else {
-            alert('Error: ' + data.message);
+        },
+        error: function(xhr, status, error) {
+            let errorMsg = error;
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            alert('Error: ' + errorMsg);
         }
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
+    });
 });
 
 function updateUI(totalCount = initialCount) {
@@ -258,17 +367,14 @@ function updateUI(totalCount = initialCount) {
     progressBar.style.width = ((currentCount / 10) * 100) + '%';
     if (currentCount >= 3) completeBtn.disabled = false;
 
+    // Display sample count in grid instead of trying to show images (descriptors aren't images)
     samplesGrid.innerHTML = '';
-    samples.forEach((sample, index) => {
-        const img = document.createElement('img');
-        img.src = sample;
-        img.className = 'w-full h-32 object-cover rounded-lg border-2 border-green-500 cursor-pointer hover:opacity-80';
-        img.onclick = () => {
-            samples.splice(index, 1);
-            updateUI();
-        };
-        samplesGrid.appendChild(img);
-    });
+    for (let i = 0; i < currentCount; i++) {
+        const sampleBox = document.createElement('div');
+        sampleBox.className = 'w-full h-16 rounded-lg border-2 border-green-500 bg-green-50 flex items-center justify-center';
+        sampleBox.innerHTML = `<span class="text-sm font-semibold text-green-700">Sample ${i + 1}</span>`;
+        samplesGrid.appendChild(sampleBox);
+    }
 }
 
 // Only initialize camera when user clicks the button (better UX)

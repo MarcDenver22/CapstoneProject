@@ -74,7 +74,6 @@
                             $utHours = $record?->undertime_hours ?? '';
                             $utMinutes = $record?->undertime_minutes ?? '';
                         @endphp
-                        @if($amIn || $amOut || $pmIn || $pmOut)
                         <tr class="border-b border-gray-200 hover:bg-blue-50 transition even:bg-gray-50">
                             <td class="py-3 px-3 text-center text-gray-800 font-semibold border-r border-gray-200">{{ $day }}</td>
                             <td class="py-3 px-2 text-center text-gray-700 font-medium border-r border-gray-200">{{ $amIn ?: '—' }}</td>
@@ -84,7 +83,6 @@
                             <td class="py-3 px-2 text-center text-gray-700 font-medium border-r border-gray-200">{{ $utHours ?: '—' }}</td>
                             <td class="py-3 px-2 text-center text-gray-700 font-medium">{{ $utMinutes ?: '—' }}</td>
                         </tr>
-                        @endif
                     @endfor
                     <!-- Total Row -->
                     <tr class="border-t-2 border-gray-400 bg-gradient-to-r from-gray-100 to-gray-50 font-bold">
