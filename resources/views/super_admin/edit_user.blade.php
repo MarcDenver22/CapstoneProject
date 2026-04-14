@@ -124,7 +124,7 @@
 
                 <!-- Action Buttons -->
                 <div class="flex justify-end gap-2 pt-4 border-t border-gray-200">
-                    <a href="{{ route('super_admin.users') }}" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 font-semibold">
+                    <a href="{{ route('super_admin.users.index') }}" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 font-semibold">
                         <i class="fas fa-arrow-left mr-2"></i> Back
                     </a>
                     <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold">

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>PSU - Asingan Campus Employee Attendance Management System Using Real-Time Face Recognition</title>
+    <title>Faculty Employee Portal</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/psu logo.png') }}">
@@ -200,7 +200,7 @@
                             <span class="text-sm font-medium">Leave Requests</span>
                         </a>
                         <!-- Profile -->
-                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                        <a href="{{ route('hr.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
                             <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Profile</span>
                         </a>
@@ -213,7 +213,7 @@
                         <!-- Reports -->
                         <a href="{{ route('hr.reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
                             <i class="fas fa-chart-bar w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
-                            <span class="text-sm font-medium">DTR Reports</span>
+                            <span class="text-sm font-medium">Attendance Reports</span>
                         </a>
                         <!-- Campus Updates -->
                         <a href="{{ route('hr.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
@@ -235,7 +235,7 @@
                             <span class="text-sm font-medium">System Dashboard</span>
                         </a>
                         <!-- User Management -->
-                        <a href="{{ route('super_admin.users') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                        <a href="{{ route('super_admin.users.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
                             <i class="fas fa-users-cog w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">User Management</span>
                         </a>
@@ -255,7 +255,7 @@
                             <span class="text-sm font-medium">System Health</span>
                         </a>
                         <!-- Profile -->
-                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                        <a href="{{ route('super_admin.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
                             <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">Profile</span>
                         </a>
@@ -300,6 +300,11 @@
                             <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Campus Updates</span>
                         </a>
+                        <!-- Export -->
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-download w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Export</span>
+                        </a>
                     </div>
                 </div>
                 @endif
@@ -325,7 +330,7 @@
                             <span class="text-sm font-medium">Attendance Log</span>
                         </a>
                         <!-- Profile -->
-                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
                             <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Profile</span>
                         </a>
@@ -345,6 +350,11 @@
                         <a href="{{ route('admin.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
                             <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Campus Updates</span>
+                        </a>
+                        <!-- Export -->
+                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                            <i class="fas fa-download w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
+                            <span class="text-sm font-medium">Export</span>
                         </a>
                     </div>
                 </div>

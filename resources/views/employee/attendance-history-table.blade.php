@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('employee.layouts.app')
 
 @section('header', 'Attendance History')
 @section('subheader', 'Daily Time Record - History View')
@@ -100,7 +100,7 @@
         <button onclick="printDTR()" class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition inline-flex items-center gap-2 shadow-sm">
             <i class="fas fa-print"></i> Print DTR
         </button>
-        <a href="{{ route('employee.attendance-history.export-pdf') }}" class="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition inline-flex items-center gap-2 shadow-sm">
+        <a href="{{ route('employee.attendance-export-pdf') }}" class="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition inline-flex items-center gap-2 shadow-sm">
             <i class="fas fa-file-pdf"></i> Export DTR
         </a>
     </div>
@@ -110,7 +110,7 @@
             // Create a hidden iframe
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
-            iframe.src = '{{ route('employee.attendance-history.print') }}';
+            iframe.src = '{{ route('employee.attendance-print-pdf') }}';
             document.body.appendChild(iframe);
             
             iframe.onload = function() {

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('employee.layouts.app')
 
 @section('header', 'Face Enrollment')
 @section('subheader', 'Register your face for authentication')
@@ -6,6 +6,86 @@
 @section('content')
 
 <div class="max-w-6xl mx-auto">
+    <!-- Enhanced Progress Section -->
+    <div class="mb-12 px-4">
+        <!-- Calculate Progress -->
+        @php
+            $samplesCount = auth()->user()->face_samples_count ?? 0;
+            $progressPercent = min(100, ($samplesCount / 3) * 100);
+            $isComplete = $samplesCount >= 3;
+        @endphp
+
+        <!-- Progress Percentage -->
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold text-gray-800">Enrollment Progress</h3>
+            <span class="text-3xl font-bold {{ $isComplete ? 'text-green-600' : 'text-blue-600' }}">{{ round($progressPercent) }}%</span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden mb-8">
+            <div class="h-full bg-gradient-to-r {{ $isComplete ? 'from-green-500 to-green-600' : 'from-blue-500 to-blue-600' }} transition-all duration-500" style="width: {{ $progressPercent }}%"></div>
+        </div>
+
+        <!-- Steps Container -->
+        <div class="grid grid-cols-2 gap-8">
+            <!-- Step 1: Register -->
+            <div class="relative">
+                <div class="flex items-start gap-4">
+                    <!-- Circle Badge -->
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 shadow-lg ring-4 ring-green-100">
+                            <i class="fas fa-check text-white text-2xl"></i>
+                        </div>
+                    </div>
+                    <!-- Content -->
+                    <div class="flex-1 pt-2">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h4 class="text-lg font-bold text-gray-800">Step 1: Register</h4>
+                            <span class="inline-block bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">Complete</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3">Complete your profile information and create your account</p>
+                        <div class="flex items-center gap-2 text-green-600 text-sm font-medium">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Profile saved successfully</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Face Enrollment -->
+            <div class="relative">
+                <div class="flex items-start gap-4">
+                    <!-- Circle Badge -->
+                    <div class="flex-shrink-0">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-lg ring-4 ring-blue-100 animate-pulse">
+                            <span class="text-white text-2xl font-bold">2</span>
+                        </div>
+                    </div>
+                    <!-- Content -->
+                    <div class="flex-1 pt-2">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h4 class="text-lg font-bold text-gray-800">Step 2: Face Enrollment</h4>
+                            <span class="inline-block {{ $isComplete ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700' }} text-xs font-semibold px-3 py-1 rounded-full">
+                                {{ $isComplete ? '✓ Complete' : 'Current' }}
+                            </span>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3">Capture 3-10 face samples for facial recognition authentication</p>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="flex items-center gap-2 text-gray-700">
+                                <i class="fas fa-clock {{ $isComplete ? 'text-green-500' : 'text-blue-500' }}"></i>
+                                <span><strong>2-3 minutes</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2 {{ $isComplete ? 'text-green-700' : 'text-gray-700' }}">
+                                <i class="fas fa-camera {{ $isComplete ? 'text-green-500' : 'text-blue-500' }}"></i>
+                                <span><strong>{{ $samplesCount }}/3 samples</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Sidebar -->
@@ -84,8 +164,9 @@
 </div>
 
 <!-- Include jQuery & face-api -->
+<!-- Include jQuery & face-api -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script async defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script async defer src="/js/face-api.min.js"></script>
 
 <script>
 // ==================== JQUERY AJAX SETUP ====================
@@ -108,15 +189,36 @@ const samplesGrid = document.getElementById('samplesGrid');
 const progressBar = document.getElementById('progressBar');
 const sampleCount = document.getElementById('sampleCount');
 const captureIndicator = document.getElementById('captureIndicator');
+const statusMessage = document.getElementById('statusMessage');
+
+// ===== STATUS MESSAGE UPDATER =====
+function updateStatus(message, icon = 'circle', type = 'info') {
+    const iconClass = {
+        'check': 'fas fa-check-circle text-green-500',
+        'warning': 'fas fa-exclamation-circle text-yellow-500',
+        'error': 'fas fa-times-circle text-red-500',
+        'loading': 'fas fa-spinner text-blue-500 animate-spin',
+        'circle': 'fas fa-circle text-gray-400',
+        'camera': 'fas fa-camera text-blue-500',
+        'face': 'fas fa-face-smile text-blue-500'
+    }[icon] || 'fas fa-circle text-gray-400';
+    
+    if (statusMessage) {
+        statusMessage.innerHTML = `<p><i class="${iconClass} text-xs mr-2"></i>${message}</p>`;
+    }
+    console.log(`📊 Status: ${message}`);
+}
 
 // Load face-api models on page load
 window.addEventListener('load', async () => {
     if (typeof faceapi === 'undefined') {
         console.error('❌ face-api.js not loaded');
+        updateStatus('Error: Face detection library failed to load', 'error', 'error');
         return;
     }
     
     try {
+        updateStatus('Loading face detection models...', 'loading', 'loading');
         console.log('📥 Loading face detection models...');
         await Promise.all([
             faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_PATH),
@@ -124,12 +226,15 @@ window.addEventListener('load', async () => {
             faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_PATH),
         ]);
         modelsLoaded = true;
+        updateStatus('✓ Models loaded successfully. Initializing camera...', 'check', 'success');
         console.log('✓ Face detection models loaded successfully');
         
         // Auto-initialize camera when models are loaded
         console.log('📷 Initializing camera...');
         await initCamera();
+        updateStatus('✓ Camera ready. Click "Capture Sample" to begin', 'camera', 'success');
     } catch (error) {
+        updateStatus('Error: Failed to initialize. Please refresh the page.', 'error', 'error');
         console.error('❌ Failed to load models or initialize camera:', error);
     }
 });
@@ -231,6 +336,7 @@ captureBtn.addEventListener('click', async () => {
     }
 
     console.log('🔍 Starting face detection...');
+    updateStatus('Scanning for face...', 'loading', 'loading');
     captureIndicator.classList.remove('hidden');
     captureBtn.disabled = true;
 
@@ -251,6 +357,7 @@ captureBtn.addEventListener('click', async () => {
 
         if (!detection || !detection.descriptor) {
             console.warn('⚠️ No face detected in frame');
+            updateStatus('No face detected. Adjust lighting or position closer to camera', 'warning', 'warning');
             alert('⚠️ No face detected. Ensure:\n✓ Good lighting\n✓ Face is 30-60cm from camera\n✓ Face is centered in frame');
             captureIndicator.classList.add('hidden');
             captureBtn.disabled = false;
@@ -258,6 +365,7 @@ captureBtn.addEventListener('click', async () => {
         }
 
         console.log('✓ Face detected, descriptor extracted');
+        updateStatus('✓ Face detected! Uploading sample...', 'face', 'success');
         console.log('  Detection confidence:', detection.detection.score);
         // Convert Float32Array to regular array for JSON serialization
         const descriptorArray = Array.from(detection.descriptor);
@@ -266,7 +374,7 @@ captureBtn.addEventListener('click', async () => {
 
         // Send descriptor to server
         $.ajax({
-            url: '{{ route("employee.face.save_sample") }}',
+            url: '{{ route("employee.face_enrollment.save_sample") }}',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ face_descriptor: descriptorArray }),
@@ -276,10 +384,19 @@ captureBtn.addEventListener('click', async () => {
                 if (data.success) {
                     samples.push(descriptorArray);
                     updateUI(data.sample_count);
+                    const remaining = Math.max(0, 3 - data.sample_count);
+                    
+                    if (remaining === 0) {
+                        updateStatus('✓ Sample ' + data.sample_count + ' captured! All required samples complete. Click "Complete Enrollment" to finish.', 'check', 'success');
+                    } else {
+                        updateStatus('✓ Sample ' + data.sample_count + ' captured! ' + remaining + ' more sample(s) needed.', 'check', 'success');
+                    }
+                    
                     console.log('✓ Sample ' + data.sample_count + ' saved successfully');
                     alert('✓ Sample ' + data.sample_count + ' captured! ' + (10 - data.sample_count) + ' more to go.');
                 } else {
                     console.error('❌ Server error:', data.message);
+                    updateStatus('Error saving sample: ' + (data.message || 'Unknown error'), 'error', 'error');
                     alert('❌ Error: ' + (data.message || 'Failed to save sample'));
                 }
             },
@@ -295,6 +412,7 @@ captureBtn.addEventListener('click', async () => {
                 }
                 
                 console.error('❌ AJAX Error:', status, ':', errorMsg);
+                updateStatus('Error: ' + errorMsg, 'error', 'error');
                 alert('❌ Error: ' + errorMsg);
             },
             complete: function() {
@@ -313,7 +431,7 @@ captureBtn.addEventListener('click', async () => {
 resetBtn.addEventListener('click', () => {
     if (confirm('Reset all samples?')) {
         $.ajax({
-            url: '{{ route("employee.face.reset") }}',
+            url: '{{ route("employee.face_enrollment.reset") }}',
             type: 'POST',
             timeout: 8000,
             success: function(data) {
@@ -340,7 +458,7 @@ completeBtn.addEventListener('click', () => {
     }
 
     $.ajax({
-        url: '{{ route("employee.face.complete") }}',
+        url: '{{ route("employee.face_enrollment.complete") }}',
         type: 'POST',
         contentType: 'application/json',
         timeout: 8000,
@@ -363,17 +481,122 @@ completeBtn.addEventListener('click', () => {
 
 function updateUI(totalCount = initialCount) {
     const currentCount = initialCount + samples.length;
-    sampleCount.textContent = currentCount;
-    progressBar.style.width = ((currentCount / 10) * 100) + '%';
-    if (currentCount >= 3) completeBtn.disabled = false;
+    const totalSamples = currentCount;
+    
+    // Update counters
+    sampleCount.textContent = totalSamples;
+    progressBar.style.width = ((totalSamples / 10) * 100) + '%';
+    
+    // Enable complete button if we have at least 3 samples
+    if (totalSamples >= 3) {
+        completeBtn.disabled = false;
+    } else {
+        completeBtn.disabled = true;
+    }
 
-    // Display sample count in grid instead of trying to show images (descriptors aren't images)
+    // Update the samples grid display
     samplesGrid.innerHTML = '';
-    for (let i = 0; i < currentCount; i++) {
+    
+    // Display samples from database (initialCount)
+    for (let i = 0; i < initialCount; i++) {
         const sampleBox = document.createElement('div');
-        sampleBox.className = 'w-full h-16 rounded-lg border-2 border-green-500 bg-green-50 flex items-center justify-center';
-        sampleBox.innerHTML = `<span class="text-sm font-semibold text-green-700">Sample ${i + 1}</span>`;
+        sampleBox.className = 'w-full h-20 rounded-lg border-2 border-blue-500 bg-blue-50 flex flex-col items-center justify-center relative group';
+        sampleBox.innerHTML = `
+            <span class="text-sm font-semibold text-blue-700">Sample ${i + 1}</span>
+            <span class="text-xs text-blue-600 mt-1">(Saved)</span>
+        `;
         samplesGrid.appendChild(sampleBox);
+    }
+    
+    // Display newly captured samples in this session
+    for (let i = 0; i < samples.length; i++) {
+        const sampleBox = document.createElement('div');
+        sampleBox.className = 'w-full h-20 rounded-lg border-2 border-green-500 bg-green-50 flex flex-col items-center justify-center relative group';
+        
+        // Add delete button for newly captured samples
+        const deleteBtn = `
+            <button type="button" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold transition opacity-0 group-hover:opacity-100 delete-sample" data-index="${i}">
+                ×
+            </button>
+        `;
+        
+        sampleBox.innerHTML = `
+            ${deleteBtn}
+            <span class="text-sm font-semibold text-green-700">Sample ${initialCount + i + 1}</span>
+            <span class="text-xs text-green-600 mt-1">(New)</span>
+        `;
+        samplesGrid.appendChild(sampleBox);
+        
+        // Attach delete handler for newly captured samples
+        const dialog = sampleBox.querySelector('.delete-sample');
+        dialog.addEventListener('click', (e) => {
+            e.preventDefault();
+            const sampleIndex = parseInt(dialog.dataset.index);
+            deleteSample(sampleIndex);
+        });
+    }
+    
+    console.log(`UI Updated: ${initialCount} saved + ${samples.length} new = ${totalSamples} total`);
+}
+
+function deleteSample(index) {
+    if (confirm('Delete this sample?')) {
+        // Remove from local array (only for newly captured samples)
+        samples.splice(index, 1);
+        
+        // Reset all samples on server
+        $.ajax({
+            url: '{{ route("employee.face_enrollment.reset") }}',
+            type: 'POST',
+            contentType: 'application/json',
+            timeout: 8000,
+            success: function(data) {
+                console.log('✓ All samples reset on server');
+                
+                // Re-save all remaining newly captured samples in order
+                if (samples.length > 0) {
+                    let savedCount = 0;
+                    const samplesToSave = [...samples]; // Create a copy
+                    
+                    samplesToSave.forEach((descriptor, idx) => {
+                        $.ajax({
+                            url: '{{ route("employee.face_enrollment.save_sample") }}',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ face_descriptor: descriptor }),
+                            timeout: 15000,
+                            success: function(data) {
+                                savedCount++;
+                                console.log(`✓ Sample resaved (${savedCount}/${samplesToSave.length})`);
+                                
+                                // Only update when all are done
+                                if (savedCount === samplesToSave.length) {
+                                    initialCount = data.sample_count - samplesToSave.length + samplesToSave.length;
+                                    console.log('Sample count synced. Total:', initialCount + samples.length);
+                                    updateUI();
+                                    console.log('✓ All remaining samples resaved and synced');
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('❌ Error resaving sample:', error);
+                                alert('Error resaving samples. Please refresh the page.');
+                                location.reload();
+                            }
+                        });
+                    });
+                } else {
+                    // No samples to resave, just reset counts
+                    initialCount = 0;
+                    updateUI();
+                    console.log('✓ Sample deleted successfully');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Error resetting samples:', error);
+                alert('Error deleting sample. Please refresh the page.');
+                location.reload();
+            }
+        });
     }
 }
 

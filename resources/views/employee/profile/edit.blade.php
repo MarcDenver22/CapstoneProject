@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'employee' ? 'layouts.employee' : 'layouts.app')
+@extends('employee.layouts.app')
 
 @section('header', 'Edit Profile')
 @section('subheader', 'Update your personal information')

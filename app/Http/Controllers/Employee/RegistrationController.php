@@ -18,7 +18,7 @@ class RegistrationController extends Controller
     public function showForm()
     {
         $departments = Department::active()->get();
-        return view('employee.employee_registration', compact('departments'));
+        return view('admin.employees.register', compact('departments'));
     }
 
     /**
@@ -76,7 +76,7 @@ class RegistrationController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        return view('employee.employee_face_enrollment', compact('user'));
+        return view('employee.face_enrollment', compact('user'));
     }
 
     /**

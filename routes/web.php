@@ -1,199 +1,225 @@
 <?php
 
-use App\Http\Controllers\LoginController;
-use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\KioskScanController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\EmployeesController;
-use App\Http\Controllers\Admin\EventController;
-use App\Http\Controllers\Admin\AnnouncementController;
-use App\Http\Controllers\Admin\AuditLogController;
-use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Employee\DashboardController as EmployeeDashboardController;
-use App\Http\Controllers\Employee\RegistrationController;
-use App\Http\Controllers\Employee\FaceEnrollmentController;
 use App\Http\Controllers\Employee\LeaveRequestController;
+use App\Http\Controllers\Employee\FaceEnrollmentController;
+use App\Http\Controllers\Employee\RegistrationController as EmployeeRegistrationController;
 use App\Http\Controllers\HR\DashboardController as HRDashboardController;
+use App\Http\Controllers\HR\ReportController as HRReportController;
 use App\Http\Controllers\HR\EventController as HREventController;
 use App\Http\Controllers\HR\AnnouncementController as HRAnnouncementController;
-use App\Http\Controllers\HR\ReportController as HRReportController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\EmployeesController;
+use App\Http\Controllers\Admin\EventController as AdminEventController;
+use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
-// Landing page route
-Route::get('/', [LandingPageController::class, 'index'])->name('landing');
+// Landing page
+Route::get('/', function () {
+    return view('landing');
+})->name('landing');
 
-// Auth routes
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-// Employee Registration routes (public)
-Route::get('/register', [RegistrationController::class, 'showForm'])->name('employee.registration.show');
-Route::post('/register', [RegistrationController::class, 'store'])->name('employee.registration.store');
-
-// Kiosk routes (public but IP-restricted)
-Route::middleware('kiosk.ip.allowlist')->group(function () {
-    // Kiosk unlock page (IP check only)
-    Route::get('/kiosk/unlock', [KioskController::class, 'showUnlock'])->name('kiosk.unlock');
-    Route::post('/kiosk/verify-pin', [KioskController::class, 'verifyPin'])->name('kiosk.verify-pin');
+Route::get('/dashboard', function () {
+    // Redirect to role-based dashboard
+    /** @var \App\Models\User|null $user */
+    $user = Auth::user();
+    if (!$user) {
+        return redirect()->route('landing');
+    }
+    $role = $user->role;
     
-    // Kiosk main page (IP check only, PIN check handled in controller)
-    Route::get('/kiosk', [KioskController::class, 'index'])->name('kiosk');
-    Route::post('/kiosk/logout', [KioskController::class, 'logout'])->name('kiosk.logout');
-    
-    // Kiosk scan page (camera-based face scan)
-    Route::get('/kiosk/scan', [KioskScanController::class, 'index'])->name('kiosk.scan');
-    Route::post('/kiosk/scan', [KioskScanController::class, 'scan'])->name('kiosk.scan');
-    Route::post('/kiosk/find-user', [KioskScanController::class, 'findUser'])->name('kiosk.find-user');
-    Route::get('/kiosk/get-user-descriptor', [KioskScanController::class, 'getUserDescriptor'])->name('kiosk.get-descriptor');
-    
-    // Debug endpoints (for troubleshooting)
-    Route::post('/kiosk/test-descriptor', [KioskScanController::class, 'testDescriptor'])->name('kiosk.test-descriptor');
-    Route::get('/kiosk/view-descriptors', [KioskScanController::class, 'viewDescriptors'])->name('kiosk.view-descriptors');
-});
+    return match($role) {
+        'employee' => redirect()->route('employee.dashboard'),
+        'hr' => redirect()->route('hr.dashboard'),
+        'admin' => redirect()->route('admin.dashboard'),
+        'super_admin' => redirect()->route('super_admin.dashboard'),
+        default => redirect()->route('landing'),
+    };
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-// Protected routes
 Route::middleware('auth')->group(function () {
-    // Admin Dashboard (Admin + Super Admin)
-    Route::get('/admin/dashboard', [DashboardController::class, 'index'])
-        ->middleware('can.access.admin')
-        ->name('admin.dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->middleware('can.access.admin')
-        ->name('dashboard');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Kiosk routes (public)
+Route::get('/kiosk', [KioskController::class, 'index'])->name('kiosk');
+Route::get('/kiosk/unlock', [KioskController::class, 'showUnlock'])->name('kiosk.unlock');
+Route::post('/kiosk/verify-pin', [KioskController::class, 'verifyPin'])->name('kiosk.verify-pin');
+Route::post('/kiosk/logout', [KioskController::class, 'logout'])->name('kiosk.logout');
+
+// Kiosk Scan routes
+Route::get('/kiosk/scan', [KioskScanController::class, 'index'])->name('kiosk.scan');
+Route::post('/kiosk/scan', [KioskScanController::class, 'scan'])->name('kiosk.scan.submit');
+Route::post('/kiosk/find-user', [KioskScanController::class, 'findUser'])->name('kiosk.find-user');
+Route::get('/kiosk/get-user-descriptor', [KioskScanController::class, 'getUserDescriptor'])->name('kiosk.get-descriptor');
+Route::get('/kiosk/test-descriptor', [KioskScanController::class, 'testDescriptor'])->name('kiosk.test-descriptor');
+Route::get('/kiosk/view-descriptors', [KioskScanController::class, 'viewDescriptors'])->name('kiosk.view-descriptors');
+
+// Employee routes
+Route::middleware('auth')->prefix('employee')->name('employee.')->group(function () {
+    Route::get('/dashboard', [EmployeeDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/attendance-history', [EmployeeDashboardController::class, 'attendanceHistory'])->name('attendance-history');
+    Route::get('/attendance-history/export-pdf', [EmployeeDashboardController::class, 'exportHistoryPdf'])->name('attendance-export-pdf');
+    Route::get('/attendance-history/print-pdf', [EmployeeDashboardController::class, 'printHistoryPdf'])->name('attendance-print-pdf');
+    Route::get('/profile/edit', [EmployeeDashboardController::class, 'editProfile'])->name('profile.edit');
+    Route::post('/profile/update', [EmployeeDashboardController::class, 'updateProfile'])->name('profile.update');
     
-    // Employee Dashboard
-    Route::get('/employee/dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
-    Route::get('/employee/attendance-history', [EmployeeDashboardController::class, 'attendanceHistory'])->name('employee.attendance-history');
-    Route::get('/employee/attendance-history/export-pdf', [EmployeeDashboardController::class, 'exportHistoryPdf'])->name('employee.attendance-history.export-pdf');
-    Route::get('/employee/attendance-history/print', [EmployeeDashboardController::class, 'printHistoryPdf'])->name('employee.attendance-history.print');
-    
-    // Employee Profile
-    Route::get('/employee/profile/edit', [EmployeeDashboardController::class, 'editProfile'])->name('employee.profile.edit');
-    Route::put('/employee/profile', [EmployeeDashboardController::class, 'updateProfile'])->name('employee.profile.update');
-    
-    // Employee Leave Requests
-    Route::prefix('/employee/leave-requests')->group(function () {
-        Route::get('/', [LeaveRequestController::class, 'index'])->name('employee.leave-requests.index');
-        Route::get('/create', [LeaveRequestController::class, 'create'])->name('employee.leave-requests.create');
-        Route::post('/', [LeaveRequestController::class, 'store'])->name('employee.leave-requests.store');
-        Route::get('/{id}', [LeaveRequestController::class, 'show'])->name('employee.leave-requests.show');
-        Route::get('/{id}/edit', [LeaveRequestController::class, 'edit'])->name('employee.leave-requests.edit');
-        Route::put('/{id}', [LeaveRequestController::class, 'update'])->name('employee.leave-requests.update');
-        Route::delete('/{id}', [LeaveRequestController::class, 'cancel'])->name('employee.leave-requests.cancel');
+    // Leave Requests
+    Route::prefix('leave-requests')->name('leave-requests.')->group(function () {
+        Route::get('/', [LeaveRequestController::class, 'index'])->name('index');
+        Route::get('/create', [LeaveRequestController::class, 'create'])->name('create');
+        Route::post('/', [LeaveRequestController::class, 'store'])->name('store');
+        Route::get('/{id}', [LeaveRequestController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [LeaveRequestController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [LeaveRequestController::class, 'update'])->name('update');
+        Route::post('/{id}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel');
     });
     
-    // Admin - Employees Management (Admin + Super Admin)
-    Route::middleware('can.access.admin')->group(function () {
-        Route::get('/employees', [EmployeesController::class, 'index'])->name('admin.employees.list');
-        Route::get('/employees/create', [EmployeesController::class, 'create'])->name('admin.employees.create');
-        Route::post('/employees', [EmployeesController::class, 'store'])->name('admin.employees.store');
-        Route::get('/employees/{id}', [EmployeesController::class, 'show'])->name('admin.employees.show');
-        Route::get('/employees/{id}/edit', [EmployeesController::class, 'edit'])->name('admin.employees.edit');
-        Route::put('/employees/{id}', [EmployeesController::class, 'update'])->name('admin.employees.update');
-        Route::delete('/employees/{id}', [EmployeesController::class, 'destroy'])->name('admin.employees.destroy');
-        Route::post('/employees/{id}/reset-face', [EmployeesController::class, 'resetFaceEnrollment'])->name('admin.employees.reset_face');
-        
-        // Events Management
-        Route::resource('events', EventController::class)->names([
-            'index' => 'admin.events.index',
-            'create' => 'admin.events.create',
-            'store' => 'admin.events.store',
-            'show' => 'admin.events.show',
-            'edit' => 'admin.events.edit',
-            'update' => 'admin.events.update',
-            'destroy' => 'admin.events.destroy',
-        ]);
-        
-        // Announcements Management
-        Route::resource('announcements', AnnouncementController::class)->names([
-            'index' => 'admin.announcements.index',
-            'create' => 'admin.announcements.create',
-            'store' => 'admin.announcements.store',
-            'show' => 'admin.announcements.show',
-            'edit' => 'admin.announcements.edit',
-            'update' => 'admin.announcements.update',
-            'destroy' => 'admin.announcements.destroy',
-        ]);
-        
-        // Audit Logs
-        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('admin.audit_logs.index');
-        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.audit_logs.show');
-        
-        // Attendance Management
-        Route::get('/attendance/today', [AttendanceController::class, 'today'])->name('admin.attendance.today');
-        Route::resource('attendance', AttendanceController::class)->names([
-            'index' => 'admin.attendance.index',
-            'create' => 'admin.attendance.create',
-            'store' => 'admin.attendance.store',
-            'show' => 'admin.attendance.show',
-            'edit' => 'admin.attendance.edit',
-            'update' => 'admin.attendance.update',
-            'destroy' => 'admin.attendance.destroy',
-        ]);
+    // Face Enrollment
+    Route::prefix('face-enrollment')->name('face_enrollment.')->group(function () {
+        Route::get('/', [FaceEnrollmentController::class, 'showForm'])->name('show');
+        Route::post('/save-sample', [FaceEnrollmentController::class, 'saveSample'])->name('save_sample');
+        Route::post('/complete', [FaceEnrollmentController::class, 'complete'])->name('complete');
+        Route::get('/status', [FaceEnrollmentController::class, 'status'])->name('status');
+        Route::post('/reset', [FaceEnrollmentController::class, 'reset'])->name('reset');
+        Route::get('/descriptors', [FaceEnrollmentController::class, 'getFaceDescriptors'])->name('descriptors');
     });
     
-    // Employee Face Enrollment (after registration)
-    Route::get('/face-enrollment', [FaceEnrollmentController::class, 'showForm'])->name('employee.face_enrollment.show');
-    Route::post('/face-enrollment/save-sample', [FaceEnrollmentController::class, 'saveSample'])->name('employee.face.save_sample');
-    Route::post('/face-enrollment/complete', [FaceEnrollmentController::class, 'complete'])->name('employee.face.complete');
-    Route::get('/face-enrollment/status', [FaceEnrollmentController::class, 'status'])->name('employee.face.status');
-    Route::post('/face-enrollment/reset', [FaceEnrollmentController::class, 'reset'])->name('employee.face.reset');
+    // Employee Registration
+    Route::get('/registration', [EmployeeRegistrationController::class, 'showForm'])->name('registration.show');
+    Route::post('/registration', [EmployeeRegistrationController::class, 'store'])->name('registration.store');
+});
 
-
-
-    // HR Dashboard
-    Route::middleware('role:hr')->group(function () {
-        Route::get('/hr/dashboard', [HRDashboardController::class, 'index'])->name('hr.dashboard');
-        Route::resource('hr/events', HREventController::class)->names([
-            'index' => 'hr.events.index',
-            'create' => 'hr.events.create',
-            'store' => 'hr.events.store',
-            'show' => 'hr.events.show',
-            'edit' => 'hr.events.edit',
-            'update' => 'hr.events.update',
-            'destroy' => 'hr.events.destroy',
-        ]);
-        Route::resource('hr/announcements', HRAnnouncementController::class)->names([
-            'index' => 'hr.announcements.index',
-            'create' => 'hr.announcements.create',
-            'store' => 'hr.announcements.store',
-            'show' => 'hr.announcements.show',
-            'edit' => 'hr.announcements.edit',
-            'update' => 'hr.announcements.update',
-            'destroy' => 'hr.announcements.destroy',
-        ]);
-        
-        // HR Reports
-        Route::get('/hr/reports', [HRReportController::class, 'index'])->name('hr.reports.index');
-        Route::get('/hr/reports/daily', [HRReportController::class, 'daily'])->name('hr.reports.daily');
-        Route::get('/hr/reports/weekly', [HRReportController::class, 'weekly'])->name('hr.reports.weekly');
-        Route::get('/hr/reports/monthly', [HRReportController::class, 'monthly'])->name('hr.reports.monthly');
-        Route::get('/hr/reports/per-employee', [HRReportController::class, 'perEmployee'])->name('hr.reports.per-employee');
-        Route::get('/hr/reports/per-department', [HRReportController::class, 'perDepartment'])->name('hr.reports.per-department');
-        Route::get('/hr/reports/export-csv', [HRReportController::class, 'exportCsv'])->name('hr.reports.export-csv');
-        Route::get('/hr/reports/export-pdf', [HRReportController::class, 'exportPdf'])->name('hr.reports.export-pdf');
-        Route::get('/hr/dtr', [HRReportController::class, 'dtrExportPage'])->name('hr.dtr.page');
-        Route::get('/hr/dtr/export-pdf', [HRReportController::class, 'exportDtrPdf'])->name('hr.dtr.export-pdf');
-        Route::get('/hr/dtr/print', [HRReportController::class, 'printDtrPdf'])->name('hr.dtr.print');
+// HR routes
+Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
+    Route::get('/dashboard', [HRDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Reports
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [HRReportController::class, 'index'])->name('index');
+        Route::get('/daily', [HRReportController::class, 'daily'])->name('daily');
+        Route::get('/weekly', [HRReportController::class, 'weekly'])->name('weekly');
+        Route::get('/monthly', [HRReportController::class, 'monthly'])->name('monthly');
+        Route::get('/per-employee', [HRReportController::class, 'perEmployee'])->name('per-employee');
+        Route::get('/per-department', [HRReportController::class, 'perDepartment'])->name('per-department');
+        Route::get('/export-pdf', [HRReportController::class, 'exportPdf'])->name('export-pdf');
+        Route::get('/export-csv', [HRReportController::class, 'exportCsv'])->name('export-csv');
     });
     
-    // Super Admin routes
-    Route::middleware('role:super_admin')->group(function () {
-        Route::get('/super-admin/dashboard', [SuperAdminDashboardController::class, 'index'])->name('super_admin.dashboard');
-        Route::get('/super-admin/users', [SuperAdminDashboardController::class, 'manageUsers'])->name('super_admin.users');
-        Route::post('/super-admin/users', [SuperAdminDashboardController::class, 'createUser'])->name('super_admin.users.create');
-        Route::get('/super-admin/users/{user}/edit', [SuperAdminDashboardController::class, 'editUser'])->name('super_admin.users.edit');
-        Route::put('/super-admin/users/{user}', [SuperAdminDashboardController::class, 'updateUser'])->name('super_admin.users.update');
-        Route::delete('/super-admin/users/{user}', [SuperAdminDashboardController::class, 'deleteUser'])->name('super_admin.users.delete');
-        Route::get('/super-admin/audit-logs', [SuperAdminDashboardController::class, 'auditLogs'])->name('super_admin.audit_logs');
-        Route::get('/super-admin/system-config', [SuperAdminDashboardController::class, 'systemConfig'])->name('super_admin.system_config');
-        Route::get('/super-admin/system-health', [SuperAdminDashboardController::class, 'systemHealth'])->name('super_admin.system_health');
-        Route::get('/super-admin/reports', [SuperAdminDashboardController::class, 'generateReports'])->name('super_admin.reports');
-        Route::post('/super-admin/backup', [SuperAdminDashboardController::class, 'backupDatabase'])->name('super_admin.backup');
-        Route::get('/super-admin/face-recognition', [SuperAdminDashboardController::class, 'faceRecognitionSettings'])->name('super_admin.face_recognition');
-        Route::get('/super-admin/privacy', [SuperAdminDashboardController::class, 'privacySettings'])->name('super_admin.privacy');
+    // DTR Export
+    Route::get('/dtr-export', [HRReportController::class, 'dtrExportPage'])->name('dtr-export');
+    Route::post('/dtr-export-pdf', [HRReportController::class, 'exportDtrPdf'])->name('dtr.export-pdf');
+    Route::post('/dtr-print-pdf', [HRReportController::class, 'printDtrPdf'])->name('dtr.export-pdf-print');
+    Route::get('/dtr-template-upload', [HRReportController::class, 'dtrExportPage'])->name('dtr-template-upload');
+    Route::post('/dtr-export-excel', [HRReportController::class, 'exportDtrPdf'])->name('dtr.export-excel');
+    
+    // Events
+    Route::prefix('events')->name('events.')->group(function () {
+        Route::get('/', [HREventController::class, 'index'])->name('index');
+        Route::get('/create', [HREventController::class, 'create'])->name('create');
+        Route::post('/', [HREventController::class, 'store'])->name('store');
+        Route::get('/{id}', [HREventController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [HREventController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [HREventController::class, 'update'])->name('update');
+        Route::delete('/{id}', [HREventController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Announcements
+    Route::prefix('announcements')->name('announcements.')->group(function () {
+        Route::get('/', [HRAnnouncementController::class, 'index'])->name('index');
+        Route::get('/create', [HRAnnouncementController::class, 'create'])->name('create');
+        Route::post('/', [HRAnnouncementController::class, 'store'])->name('store');
+        Route::get('/{id}', [HRAnnouncementController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [HRAnnouncementController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [HRAnnouncementController::class, 'update'])->name('update');
+        Route::delete('/{id}', [HRAnnouncementController::class, 'destroy'])->name('destroy');
     });
 });
+
+// Admin routes
+Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Employees
+    Route::prefix('employees')->name('employees.')->group(function () {
+        Route::get('/', [EmployeesController::class, 'index'])->name('list');
+        Route::get('/create', [EmployeesController::class, 'create'])->name('create');
+        Route::post('/', [EmployeesController::class, 'store'])->name('store');
+        Route::get('/{id}', [EmployeesController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [EmployeesController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [EmployeesController::class, 'update'])->name('update');
+        Route::delete('/{id}', [EmployeesController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/reset-face', [EmployeesController::class, 'resetFaceEnrollment'])->name('reset_face');
+    });
+    
+    // Events
+    Route::prefix('events')->name('events.')->group(function () {
+        Route::get('/', [AdminEventController::class, 'index'])->name('index');
+        Route::get('/create', [AdminEventController::class, 'create'])->name('create');
+        Route::post('/', [AdminEventController::class, 'store'])->name('store');
+        Route::get('/{id}', [AdminEventController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [AdminEventController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [AdminEventController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminEventController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Announcements
+    Route::prefix('announcements')->name('announcements.')->group(function () {
+        Route::get('/', [AdminAnnouncementController::class, 'index'])->name('index');
+        Route::get('/create', [AdminAnnouncementController::class, 'create'])->name('create');
+        Route::post('/', [AdminAnnouncementController::class, 'store'])->name('store');
+        Route::get('/{id}', [AdminAnnouncementController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [AdminAnnouncementController::class, 'edit'])->name('edit');
+        Route::patch('/{id}', [AdminAnnouncementController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AdminAnnouncementController::class, 'destroy'])->name('destroy');
+    });
+    
+    // Audit Logs
+    Route::prefix('audit-logs')->name('audit_logs.')->group(function () {
+        Route::get('/', [AuditLogController::class, 'index'])->name('index');
+        Route::get('/{id}', [AuditLogController::class, 'show'])->name('show');
+    });
+    
+    // Attendance
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('index');
+    });
+});
+
+// Super Admin routes
+Route::middleware('auth')->prefix('super-admin')->name('super_admin.')->group(function () {
+    Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->middleware('role:super_admin')->name('dashboard');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Users Management
+    Route::prefix('users')->name('users.')->middleware('role:super_admin')->group(function () {
+        Route::get('/', [SuperAdminDashboardController::class, 'manageUsers'])->name('index');
+        Route::get('/create', [SuperAdminDashboardController::class, 'manageUsers'])->name('create');
+        Route::post('/', [SuperAdminDashboardController::class, 'createUser'])->name('store');
+        Route::get('/{user}/edit', [SuperAdminDashboardController::class, 'editUser'])->name('edit');
+        Route::patch('/{user}', [SuperAdminDashboardController::class, 'updateUser'])->name('update');
+        Route::delete('/{user}', [SuperAdminDashboardController::class, 'deleteUser'])->name('delete');
+    });
+    
+    // Audit Logs
+    Route::get('/audit-logs', [SuperAdminDashboardController::class, 'auditLogs'])->middleware('role:super_admin')->name('audit_logs');
+    
+    // System Settings
+    Route::get('/system-config', [SuperAdminDashboardController::class, 'systemConfig'])->middleware('role:super_admin')->name('system_config');
+    Route::get('/system-health', [SuperAdminDashboardController::class, 'systemHealth'])->middleware('role:super_admin')->name('system_health');
+});
+
+require __DIR__.'/auth.php';

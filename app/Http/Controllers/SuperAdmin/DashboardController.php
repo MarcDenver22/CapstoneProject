@@ -106,7 +106,7 @@ class DashboardController extends Controller
             'role' => $user->role,
         ]);
 
-        return redirect()->route('super_admin.users')->with('success', 'User created successfully');
+        return redirect()->route('super_admin.users.index')->with('success', 'User created successfully');
     }
 
     /**
@@ -157,7 +157,7 @@ class DashboardController extends Controller
             AuditLogger::logUpdate('User', $user->id, $changes);
         }
 
-        return redirect()->route('super_admin.users')->with('success', 'User updated successfully');
+        return redirect()->route('super_admin.users.index')->with('success', 'User updated successfully');
     }
 
     /**
@@ -172,7 +172,7 @@ class DashboardController extends Controller
 
         // Prevent deleting the current user
         if (Auth::id() === $user->id) {
-            return redirect()->route('super_admin.users')->with('error', 'Cannot delete your own account');
+            return redirect()->route('super_admin.users.index')->with('error', 'Cannot delete your own account');
         }
 
         $userName = $user->name;
@@ -182,7 +182,7 @@ class DashboardController extends Controller
         // Log user deletion
         AuditLogger::logDelete('User', $user->id, $userData);
 
-        return redirect()->route('super_admin.users')->with('success', "User '{$userName}' deleted successfully");
+        return redirect()->route('super_admin.users.index')->with('success', "User '{$userName}' deleted successfully");
     }
 
     /**

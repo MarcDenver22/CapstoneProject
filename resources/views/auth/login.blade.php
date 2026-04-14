@@ -254,27 +254,46 @@
             font-weight: 600;
         }
 
-        /* Back button - pinned like kiosk */
-        .back-button {
-            display: inline-block;
+        /* Back button enhancement */
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
             padding: 12px 24px;
+            color: #667eea;
             background: transparent;
             border: none;
-            color: #667eea;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: visible;
+            box-shadow: none;
+            letter-spacing: 0.3px;
         }
 
-        .back-button:hover {
+        .back-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            transition: none;
+            z-index: 1;
+        }
+
+        .back-btn:hover {
             color: #764ba2;
+            transform: translateX(-3px);
+            box-shadow: none;
+        }
+
+        .back-btn:active {
+            transform: translateX(-1px);
         }
     </style>
 </head>
@@ -356,18 +375,25 @@
                 </div>
 
                 {{-- Remember me --}}
-                <div class="flex items-center pt-2">
-                    <input 
-                        type="checkbox" 
-                        id="remember" 
-                        name="remember" 
-                        value="1" 
-                        class="custom-checkbox"
-                        {{ old('remember') ? 'checked' : '' }}
-                    >
-                    <label for="remember" class="ml-2.5 text-sm text-gray-700 font-medium cursor-pointer select-none">
-                        Remember me
-                    </label>
+                <div class="flex items-center justify-between pt-2">
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="remember" 
+                            name="remember" 
+                            value="1" 
+                            class="custom-checkbox"
+                            {{ old('remember') ? 'checked' : '' }}
+                        >
+                        <label for="remember" class="ml-2.5 text-sm text-gray-700 font-medium cursor-pointer select-none">
+                            Remember me
+                        </label>
+                    </div>
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}" class="text-sm text-purple-600 hover:text-purple-700 font-medium transition">
+                            Forgot password?
+                        </a>
+                    @endif
                 </div>
 
                 {{-- Submit --}}
@@ -377,16 +403,12 @@
                 >
                     <i class="fas fa-sign-in-alt mr-2"></i>Sign in to your account
                 </button>
-
-                {{-- Back to Home --}}
-                <a href="{{ url('/') }}" class="back-button text-purple-600 hover:text-purple-800" title="Go back to home page">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Back to Home</span>
-                </a>
             </form>
-        </div>
 
-        <p class="text-center text-xs text-white/60 mt-6 footer-text">
+            <a href="{{ route('landing') }}" class="back-btn">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Home
+            </a>
+        </div>
             <span class="text-white/50 text-xs mt-2 block">Developed by: Aguilar, Larry Sykioco • Buaya, Reden Ines • Ducsa, Neslyn Arcarte • Nazaire, Edleen Grace Arenas • Riturban, Marc Denver Fernandez</span>
         </p>
     </div>

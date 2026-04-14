@@ -334,7 +334,7 @@
             <h2 class="text-lg font-bold text-gray-800">Recently Registered Users</h2>
             <p class="text-sm text-gray-500">Latest 10 user registrations</p>
         </div>
-        <a href="{{ route('super_admin.users') }}" class="text-blue-600 text-sm font-semibold hover:underline">View All →</a>
+        <a href="{{ route('super_admin.users.index') }}" class="text-blue-600 text-sm font-semibold hover:underline">View All →</a>
     </div>
     
     <div class="overflow-x-auto">

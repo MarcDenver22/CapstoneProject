@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('employee.layouts.app')
 
 @section('header', 'Edit Leave Request')
 @section('subheader', 'Modify your request details')

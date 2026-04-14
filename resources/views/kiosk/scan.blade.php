@@ -318,7 +318,7 @@
                 <label style="display: block; color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Enter Your Employee ID</label>
                 <input type="text" id="employeeIdInput" placeholder="e.g., EMP001" style="width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 8px; color: white; font-size: 16px; margin-bottom: 12px;" autocomplete="off">
                 <button id="findUserBtn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                    Find Employee
+                    Log In
                 </button>
             </div>
 
@@ -343,16 +343,12 @@
                 </div>
             </div>
 
-            <button class="scan-button" id="scanButton">
-                <span>📱 START DETECTION</span>
-            </button>
-
             <div class="status-message" id="statusMessage"></div>
-
+        </div>
     </div>
 
-    <!-- Include face-api.js library -->
-    <script async src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <!-- Include face-api.js library (hosted locally) -->
+    <script async src="/js/face-api.min.js"></script>
 
     <!-- Include jQuery for AJAX -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -362,3 +358,5 @@
 
     <!-- Load scanner module -->
     <script src="/js/face-scanner.js"></script>
+</body>
+</html>

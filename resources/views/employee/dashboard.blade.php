@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('employee.layouts.app')
 
 @section('header', 'Dashboard')
 @section('subheader', 'Employee Portal')
@@ -37,9 +37,9 @@
                     
                     <div class="flex items-center gap-3 mt-6 flex-wrap">
                         @if($user->face_enrolled)
-                            <span class="px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 flex items-center gap-2 ring-1 ring-green-200">
+                            <a href="{{ route('employee.face_enrollment.show') }}" class="px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 flex items-center gap-2 ring-1 ring-green-200 hover:from-green-200 hover:to-emerald-200 transition">
                                 <i class="fas fa-check-circle"></i> Face Enrolled
-                            </span>
+                            </a>
                         @endif
                         <span class="px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 ring-1 ring-blue-200">
                             <i class="fas fa-briefcase text-xs mr-1"></i>{{ ucfirst($user->role) }}

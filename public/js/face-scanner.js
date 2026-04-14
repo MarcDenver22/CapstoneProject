@@ -61,7 +61,6 @@ let closedEyeFrames = 0;  // Counter for consecutive closed eye frames
 let openEyeFrames = 0;    // Counter for consecutive open eye frames
 
 // DOM elements
-const scanButton = document.getElementById('scanButton');
 const videoPreview = document.getElementById('videoPreview');
 const detectionCanvas = document.getElementById('detectionCanvas');
 const cameraContainer = document.getElementById('cameraContainer');
@@ -80,7 +79,7 @@ const CONFIG = {
     COOLDOWN_DURATION: 5000,
     CONFIDENCE_THRESHOLD: 0.6,
     FACE_MATCH_THRESHOLD: 0.6,      // Euclidean distance threshold for face matching
-    BLINK_THRESHOLD: 0.20,           // Eye openness threshold (open eyes ~0.30+, closed eyes ~0.15-)
+    BLINK_THRESHOLD: 0.25,           // Eye openness threshold (open eyes ~0.28+, closed eyes ~0.20-)
     MODEL_PATH: '/storage/models/'
 };
 
@@ -108,7 +107,6 @@ window.addEventListener('load', async () => {
         modelsLoaded = true;
         console.log('✅ Models loaded');
         showStatus('Enter your Employee ID to begin', 'idle');
-        scanButton.disabled = false;
 
         // Focus on employee ID input
         employeeIdInput.focus();
@@ -116,7 +114,6 @@ window.addEventListener('load', async () => {
     } catch (error) {
         console.error('❌ Initialization failed:', error);
         showStatus('Failed to load models: ' + error.message, 'error');
-        scanButton.disabled = true;
     }
 
     // Attach event listeners
@@ -131,7 +128,6 @@ function attachEventListeners() {
     employeeIdInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') findUserBtn.click();
     });
-    scanButton.addEventListener('click', toggleDetection);
     document.getElementById('backHomeButton')?.addEventListener('click', resetScanner);
 }
 
@@ -200,7 +196,7 @@ function handleFindUser() {
         },
         complete: function() {
             findUserBtn.disabled = false;
-            findUserBtn.textContent = 'Find Employee';
+            findUserBtn.textContent = 'Log In';
         }
     });
 }
@@ -223,8 +219,6 @@ async function startCameraForScanning() {
         return;
     }
     
-    scanButton.textContent = '📱 START DETECTION';
-    scanButton.style.display = 'block';
     await startCamera();
 }
 
@@ -248,7 +242,6 @@ async function startCamera() {
 
         cameraContainer.classList.add('active');
         detectionInfo.style.display = 'block';
-        scanButton.textContent = '⏹️ STOP DETECTION';
         
         // Start face detection loop
         startFaceDetection();
@@ -261,7 +254,6 @@ async function startCamera() {
         else if (error.name === 'NotFoundError') msg += 'No camera found.';
         else msg += error.message;
         showStatus(msg, 'error');
-        scanButton.disabled = false;
     }
 }
 
@@ -284,7 +276,6 @@ function stopCamera() {
     detectionInfo.style.display = 'none';
     detectedFaceCount = 0;
     isFaceDetected = false;
-    scanButton.textContent = '📱 START DETECTION';
     enrolledDescriptor = null;
     lastEyeState = null;
     blinkConfirmed = false;
@@ -292,16 +283,6 @@ function stopCamera() {
 
 // ==================== DETECTION TOGGLE ====================
 
-/**
- * Toggle between starting and stopping detection
- */
-async function toggleDetection() {
-    if (scanButton.textContent.includes('START')) {
-        await startCamera();
-    } else {
-        stopCamera();
-    }
-}
 
 // ==================== FACE DETECTION ====================
 
@@ -592,7 +573,7 @@ async function performScan() {
 
         if (!detection || !detection.descriptor) {
             showStatus('⚠️ No face detected. Please look at the camera.', 'error');
-            scanButton.disabled = false;
+            isScanning = false;
             return;
         }
 
@@ -644,7 +625,6 @@ async function performScan() {
                     setCooldown();
                 } else {
                     showStatus('✗ ' + data.message, 'error');
-                    scanButton.disabled = false;
                 }
             },
             error: function(xhr, status, error) {
@@ -708,9 +688,12 @@ function displayAttendanceSuccess(data) {
 }
 
 /**
- * Reset scanner to initial state
+ * Reset scanner to initial state for next user
  */
 function resetScanner() {
+    // Stop camera first
+    stopCamera();
+    
     // Clear all employee data from success screen
     document.getElementById('employeeName').textContent = '';
     document.getElementById('employeeDetails').innerHTML = '';
@@ -719,11 +702,9 @@ function resetScanner() {
     loginForm.style.display = 'block';
     cameraContainer.style.display = 'none';
     document.getElementById('employeeIdInput').value = '';
-    document.getElementById('employeeIdInput').focus();
     userFound = false;
     currentUserId = null;
     currentUserName = null;
-    stopCamera();
 }
 
 /**
@@ -731,11 +712,9 @@ function resetScanner() {
  */
 function setCooldown() {
     cooldownActive = true;
-    scanButton.disabled = true;
     
     setTimeout(() => {
         cooldownActive = false;
-        scanButton.disabled = false;
     }, CONFIG.COOLDOWN_DURATION);
 }
 
