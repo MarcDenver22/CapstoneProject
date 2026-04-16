@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Add Attendance Record')
 @section('header', 'Add Attendance Record')
 @section('subheader', 'Create a new attendance entry')
 

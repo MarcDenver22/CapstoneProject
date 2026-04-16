@@ -9,6 +9,8 @@ class Department extends Model
 {
     use HasFactory;
 
+    protected $connection = 'supabase';
+
     protected $fillable = [
         'name',
         'code',

@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', $announcement->title)
 @section('header', $announcement->title)
 @section('subheader', 'Announcement Details')
 
@@ -31,9 +32,9 @@
             <div class="text-gray-600 space-y-1 text-sm">
                 <div>Published: {{ $announcement->published_at?->format('l, F j, Y \a\t g:i A') ?? 'Not published' }}</div>
                 @if($announcement->expires_at)
-                    <div>Expires: {{ $announcement->expires_at->format('l, F j, Y \a\t g:i A') }}</div>
+                    <div>Expires: {{ $announcement->expires_at?->format('l, F j, Y \a\t g:i A') }}</div>
                 @endif
-                <div>Created by {{ $announcement->creator->name ?? 'System' }} on {{ $announcement->created_at->format('M d, Y') }}</div>
+                <div>Created by {{ $announcement->creator->name ?? 'System' }} on {{ $announcement->created_at?->format('M d, Y') ?? 'N/A' }}</div>
             </div>
         </div>
 
@@ -43,16 +44,29 @@
         </div>
 
         <div class="flex gap-4 mt-6 pt-6 border-t border-gray-200">
-            <a href="{{ auth()->user()->role === 'hr' ? route('hr.announcements.edit', $announcement) : route('admin.announcements.edit', $announcement) }}" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-semibold">
+            @php
+                $editAnnouncementUrl = auth()->user()->role === 'hr'
+                    ? url('hr/announcements/' . ($announcement->id ?? '') . '/edit')
+                    : route('admin.announcements.edit', $announcement);
+            @endphp
+            <a href="{{ $editAnnouncementUrl }}" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-semibold">
                 <i class="fas fa-edit mr-2"></i> Edit Announcement
             </a>
-            <form action="{{ auth()->user()->role === 'hr' ? route('hr.announcements.destroy', $announcement) : route('admin.announcements.destroy', $announcement) }}" method="POST" style="display:inline;">
+            @if($announcement && $announcement->id)
+                @php
+                    $deleteAnnouncementUrl = auth()->user()->role === 'hr'
+                        ? route('hr.announcements.destroy', ['id' => $announcement->id])
+                        : route('admin.announcements.destroy', $announcement);
+                @endphp
+                <form action="{{ $deleteAnnouncementUrl }}" method="POST" style="display:inline;">
                 @csrf
                 @method('DELETE')
+                <input type="hidden" name="id" value="{{ $announcement->id }}">
                 <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 font-semibold" onclick="return confirm('Are you sure you want to delete this announcement?')">
                     <i class="fas fa-trash mr-2"></i> Delete Announcement
                 </button>
             </form>
+            @endif
             <a href="{{ auth()->user()->role === 'hr' ? route('hr.announcements.index') : route('admin.announcements.index') }}" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 font-semibold">
                 Back to Announcements
             </a>

@@ -1,17 +1,13 @@
 @extends('layouts.app')
 
+@section('title', 'System Configuration')
+@section('header', 'System Configuration')
+@section('subheader', 'Manage system settings and configurations')
+
 @section('content')
 <div class="space-y-6">
     <!-- Header -->
-    <div class="glass-header rounded-2xl p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">System Configuration</h1>
-                <p class="text-gray-600 mt-1">Manage system settings and configurations</p>
-            </div>
-            <i class="fas fa-sliders-h text-4xl text-red-500 opacity-20"></i>
-        </div>
-    </div>
+    
 
     <!-- Configuration Sections -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -37,16 +33,16 @@
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div class="flex items-center gap-3 mb-4">
                 <i class="fas fa-database text-red-500"></i>
-                <h2 class="text-xl font-semibold text-gray-900">Database Settings</h2>
+                <h2 class="text-xl font-semibold text-gray-900">Database Settings (Supabase)</h2>
             </div>
             <div class="space-y-4">
                 <div>
                     <label class="text-sm font-medium text-gray-700">Database Host</label>
-                    <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" value="{{ config('database.connections.mysql.host') }}" disabled>
+                    <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" value="{{ config('database.connections.supabase.host') }}" disabled>
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700">Database Name</label>
-                    <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" value="{{ config('database.connections.mysql.database') }}" disabled>
+                    <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500" value="{{ config('database.connections.supabase.database') }}" disabled>
                 </div>
             </div>
         </div>

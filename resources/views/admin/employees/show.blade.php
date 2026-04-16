@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Employee Profile')
 @section('header', 'Employee Profile')
 @section('subheader', $employee->name)
 

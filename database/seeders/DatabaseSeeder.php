@@ -14,21 +14,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed departments first (only if not already seeded)
+        // Seed departments only if not already seeded
         if (\App\Models\Department::count() === 0) {
             $this->call(DepartmentSeeder::class);
         }
 
-        // Seed test users
+        // Seed sample accounts for each role
         $this->call(UserSeeder::class);
-
-        // Note: Users are created through registration, not seeding
-        // This ensures only registered users exist in the system
-        
-        // Clear audit logs to start fresh
-        \App\Models\AuditLog::query()->delete();
-        
-        // Clear attendance records to start fresh
-        \App\Models\Attendance::query()->delete();
     }
 }

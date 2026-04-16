@@ -9,6 +9,7 @@ class LeaveRequest extends Model
 {
     use HasFactory;
 
+    protected $connection = 'supabase';
     protected $table = 'leave_requests';
 
     protected $fillable = [

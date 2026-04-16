@@ -1,6 +1,7 @@
-@extends('employee.layouts.app')
+@extends('layouts.app')
 
-@section('header', 'Attendance History')
+@section('title', 'DTR')
+@section('header', 'DTR')
 @section('subheader', 'Daily Time Record - History View')
 
 @section('content')
@@ -101,12 +102,25 @@
             <i class="fas fa-print"></i> Print DTR
         </button>
         <a href="{{ route('employee.attendance-export-pdf') }}" class="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition inline-flex items-center gap-2 shadow-sm">
-            <i class="fas fa-file-pdf"></i> Export DTR
+            <i class="fas fa-file-pdf"></i> Download DTR
         </a>
     </div>
 
     <script>
+        let printInProgress = false;
+        
         function printDTR() {
+            // Prevent multiple concurrent print operations
+            if (printInProgress) {
+                return;
+            }
+            
+            printInProgress = true;
+            const printBtn = event.target.closest('button');
+            printBtn.disabled = true;
+            printBtn.style.opacity = '0.5';
+            printBtn.style.cursor = 'not-allowed';
+            
             // Create a hidden iframe
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
@@ -117,10 +131,28 @@
                 // Trigger print on the iframe content
                 iframe.contentWindow.print();
                 
-                // Remove the iframe after a short delay to ensure print dialog opens
+                // Listen for print dialog close
+                iframe.contentWindow.addEventListener('afterprint', function() {
+                    // Remove iframe and reset button
+                    if (document.body.contains(iframe)) {
+                        document.body.removeChild(iframe);
+                    }
+                    printInProgress = false;
+                    printBtn.disabled = false;
+                    printBtn.style.opacity = '1';
+                    printBtn.style.cursor = 'pointer';
+                }, { once: true });
+                
+                // Fallback: reset after 5 seconds if afterprint doesn't fire
                 setTimeout(() => {
-                    document.body.removeChild(iframe);
-                }, 1000);
+                    if (document.body.contains(iframe)) {
+                        document.body.removeChild(iframe);
+                    }
+                    printInProgress = false;
+                    printBtn.disabled = false;
+                    printBtn.style.opacity = '1';
+                    printBtn.style.cursor = 'pointer';
+                }, 5000);
             };
         }
     </script>

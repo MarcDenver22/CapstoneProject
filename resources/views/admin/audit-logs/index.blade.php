@@ -1,13 +1,11 @@
 @extends('layouts.app')
 
+@section('title', 'Audit Logs')
 @section('header', 'Audit Logs')
 @section('subheader', 'View system activity and audit trail')
 
 @section('content')
 
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Audit Logs</h1>
-</div>
 
 <!-- Audit Logs Table -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
-@section('header', 'Attendance Management')
+@section('title', 'Attendance Log')
+@section('header', 'Attendance Log')
 @section('subheader', 'View and manage employee attendance records')
 
 @section('content')
@@ -8,12 +9,19 @@
 <!-- Attendance Table -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
     
-    <div class="px-6 py-4 border-b border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800">All Attendance Records</h2>
-        <p class="text-xs text-gray-500 mt-1">Displaying all employee attendance logs. Click "View" on today's dashboard for today's records.</p>
-    </div>
+  
 
     <div class="p-6">
+        <div class="relative mb-4">
+            <input 
+                type="text" 
+                id="searchInput"
+                placeholder="Search employee..." 
+                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+            />
+            <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+        </div>
+
         @if($attendances->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -37,7 +45,7 @@
                     </thead>
                     <tbody>
                         @foreach($attendances as $record)
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition attendance-row" data-employee-name="{{ strtolower($record->user->name ?? '') }}" data-employee-email="{{ strtolower($record->user->email ?? '') }}">
                                 <td class="py-3 px-4">
                                     <p class="font-medium text-gray-900">{{ $record->user->name ?? 'N/A' }}</p>
                                     <p class="text-xs text-gray-500">{{ $record->user->email ?? '-' }}</p>
@@ -47,8 +55,16 @@
                                 </td>
                                 <!-- A.M. Arrival -->
                                 <td class="py-3 px-4 text-center border-r border-gray-300">
-                                    @if($record->time_in && $record->time_in->hour < 12)
-                                        <span class="text-gray-600 font-medium">{{ $record->time_in->format('H:i') }}</span>
+                                    @php
+                                        $timeIn = $record->time_in;
+                                        $amArrival = null;
+                                        if ($timeIn) {
+                                            $time = \Carbon\Carbon::createFromFormat('H:i:s', $timeIn) ?? \Carbon\Carbon::createFromFormat('H:i', $timeIn);
+                                            $amArrival = $time && $time->hour < 12 ? $time->format('H:i') : null;
+                                        }
+                                    @endphp
+                                    @if($amArrival)
+                                        <span class="text-gray-600 font-medium">{{ $amArrival }}</span>
                                     @else
                                         <span class="text-gray-400">—</span>
                                     @endif
@@ -63,11 +79,14 @@
                                 </td>
                                 <!-- P.M. Departure -->
                                 <td class="py-3 px-4 text-center border-r border-gray-300">
-                                    @if($record->time_out)
-                                        <span class="text-gray-600 font-medium">{{ $record->time_out->format('H:i') }}</span>
-                                    @else
-                                        <span class="text-gray-400">—</span>
-                                    @endif
+                                    @php
+                                        $timeOut = $record->time_out;
+                                        if ($timeOut) {
+                                            echo '<span class="text-gray-600 font-medium">' . substr($timeOut, 0, 5) . '</span>';
+                                        } else {
+                                            echo '<span class="text-gray-400">—</span>';
+                                        }
+                                    @endphp
                                 </td>
                                 <td class="py-3 px-4 border-r border-gray-300">
                                     <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $record->getStatusBadgeClass() }}">
@@ -102,5 +121,46 @@
         {{ $attendances->links() }}
     </div>
 @endif
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        
+        if (!searchInput) return;
+        
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('tbody tr.attendance-row');
+            let visibleCount = 0;
+            
+            tableRows.forEach(row => {
+                const employeeName = row.getAttribute('data-employee-name') || '';
+                const employeeEmail = row.getAttribute('data-employee-email') || '';
+                const searchText = employeeName + ' ' + employeeEmail;
+                
+                // Show/hide row based on search match
+                if (searchText.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show "no results" message if no rows match
+            const tbody = document.querySelector('tbody');
+            let noResultsRow = document.querySelector('tbody .no-results-row');
+            
+            if (visibleCount === 0 && tableRows.length > 0 && tbody && !noResultsRow) {
+                noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results-row';
+                noResultsRow.innerHTML = '<td colspan="8" class="py-8 text-center text-gray-500"><i class="fas fa-search text-2xl mb-2 block"></i><p class="font-medium">No employees match your search</p></td>';
+                tbody.appendChild(noResultsRow);
+            } else if (visibleCount > 0 && noResultsRow) {
+                noResultsRow.remove();
+            }
+        });
+    });
+</script>
 
 @endsection

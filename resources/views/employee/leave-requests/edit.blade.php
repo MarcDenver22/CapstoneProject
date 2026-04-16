@@ -1,5 +1,6 @@
-@extends('employee.layouts.app')
+@extends('layouts.app')
 
+@section('title', 'Edit Leave Request')
 @section('header', 'Edit Leave Request')
 @section('subheader', 'Modify your request details')
 
@@ -9,7 +10,7 @@
     <!-- Form -->
     <form action="{{ route('employee.leave-requests.update', $leaveRequest->id) }}" method="POST" class="space-y-6">
         @csrf
-        @method('PUT')
+        @method('PATCH')
 
         <!-- Leave Type -->
         <div>

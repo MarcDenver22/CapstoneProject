@@ -1,8 +1,6 @@
 <?php
 
 namespace App\Http\Requests\Auth;
-
-use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -44,23 +42,12 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
         $credentials = $this->only('email', 'password');
 
-        // First try the default guard (local DB)
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
-            // If local authentication fails, optionally check against Supabase connection
-            $supabaseUser = User::on('supabase')
-                ->where('email', $credentials['email'])
-                ->first();
+            RateLimiter::hit($this->throttleKey());
 
-            if (! $supabaseUser || ! password_verify($credentials['password'], $supabaseUser->password)) {
-                RateLimiter::hit($this->throttleKey());
-
-                throw ValidationException::withMessages([
-                    'email' => trans('auth.failed'),
-                ]);
-            }
-
-            // Log in the Supabase-backed user into the local session
-            Auth::login($supabaseUser, $this->boolean('remember'));
+            throw ValidationException::withMessages([
+                'email' => trans('auth.failed'),
+            ]);
         }
 
         RateLimiter::clear($this->throttleKey());

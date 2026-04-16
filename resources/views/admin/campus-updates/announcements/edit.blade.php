@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Edit Announcement')
 @section('header', 'Edit Announcement')
 @section('subheader', 'Update announcement details')
 
@@ -19,9 +20,15 @@
             </div>
         @endif
 
-        <form action="{{ auth()->user()->role === 'hr' ? route('hr.announcements.update', $announcement) : route('admin.announcements.update', $announcement) }}" method="POST" class="space-y-6">
+        @php
+            $actionUrl = auth()->user()->role === 'hr'
+                ? url('hr/announcements/' . $announcement->id)
+                : url('admin/announcements/' . $announcement->id);
+        @endphp
+        <form action="{{ $actionUrl }}" method="POST" class="space-y-6">
             @csrf
-            @method('PUT')
+            @method('PATCH')
+            <input type="hidden" name="id" value="{{ $announcement->id }}">
 
             <!-- Title -->
             <div>

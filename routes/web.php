@@ -9,12 +9,9 @@ use App\Http\Controllers\Employee\FaceEnrollmentController;
 use App\Http\Controllers\Employee\RegistrationController as EmployeeRegistrationController;
 use App\Http\Controllers\HR\DashboardController as HRDashboardController;
 use App\Http\Controllers\HR\ReportController as HRReportController;
-use App\Http\Controllers\HR\EventController as HREventController;
-use App\Http\Controllers\HR\AnnouncementController as HRAnnouncementController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\EmployeesController;
-use App\Http\Controllers\Admin\EventController as AdminEventController;
-use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
+use App\Http\Controllers\Admin\CampusUpdateController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -70,7 +67,8 @@ Route::middleware('auth')->prefix('employee')->name('employee.')->group(function
     Route::get('/attendance-history/export-pdf', [EmployeeDashboardController::class, 'exportHistoryPdf'])->name('attendance-export-pdf');
     Route::get('/attendance-history/print-pdf', [EmployeeDashboardController::class, 'printHistoryPdf'])->name('attendance-print-pdf');
     Route::get('/profile/edit', [EmployeeDashboardController::class, 'editProfile'])->name('profile.edit');
-    Route::post('/profile/update', [EmployeeDashboardController::class, 'updateProfile'])->name('profile.update');
+    // Allow both POST and PUT for profile updates to avoid MethodNotAllowed errors
+    Route::match(['post', 'put'], '/profile/update', [EmployeeDashboardController::class, 'updateProfile'])->name('profile.update');
     
     // Leave Requests
     Route::prefix('leave-requests')->name('leave-requests.')->group(function () {
@@ -80,7 +78,8 @@ Route::middleware('auth')->prefix('employee')->name('employee.')->group(function
         Route::get('/{id}', [LeaveRequestController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [LeaveRequestController::class, 'edit'])->name('edit');
         Route::patch('/{id}', [LeaveRequestController::class, 'update'])->name('update');
-        Route::post('/{id}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel');
+        // Allow both POST and DELETE for cancel to avoid MethodNotAllowed errors from old forms/tools
+        Route::match(['post', 'delete'], '/{id}/cancel', [LeaveRequestController::class, 'cancel'])->name('cancel');
     });
     
     // Face Enrollment
@@ -101,49 +100,42 @@ Route::middleware('auth')->prefix('employee')->name('employee.')->group(function
 // HR routes
 Route::middleware('auth')->prefix('hr')->name('hr.')->group(function () {
     Route::get('/dashboard', [HRDashboardController::class, 'index'])->name('dashboard');
+    
+    // Profile (HR) - reuse shared ProfileController
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    
-    // Reports
+
+    // Attendance History (HR user can view their own history like employees)
+    Route::get('/attendance-history', [EmployeeDashboardController::class, 'attendanceHistory'])->name('attendance-history');
+    Route::get('/attendance-history/export-pdf', [EmployeeDashboardController::class, 'exportHistoryPdf'])->name('attendance-export-pdf');
+    Route::get('/attendance-history/print-pdf', [EmployeeDashboardController::class, 'printHistoryPdf'])->name('attendance-print-pdf');
+
+    // Announcements (HR) - use unified CampusUpdateController
+    Route::prefix('announcements')->name('announcements.')->group(function () {
+        Route::get('/', [CampusUpdateController::class, 'index'])->name('index');
+        Route::get('/create', [CampusUpdateController::class, 'create'])->name('create')->defaults('type', 'announcement');
+        Route::post('/', [CampusUpdateController::class, 'store'])->name('store')->defaults('type', 'announcement');
+        Route::get('/{id}', [CampusUpdateController::class, 'show'])->name('show')->defaults('type', 'announcement');
+        Route::get('/{id}/edit', [CampusUpdateController::class, 'edit'])->name('edit')->defaults('type', 'announcement');
+        Route::patch('/{id}', [CampusUpdateController::class, 'update'])->name('update')->defaults('type', 'announcement');
+        Route::delete('/{id}', [CampusUpdateController::class, 'destroy'])->name('destroy')->defaults('type', 'announcement');
+    });
+
+    // HR Reports
     Route::prefix('reports')->name('reports.')->group(function () {
         Route::get('/', [HRReportController::class, 'index'])->name('index');
-        Route::get('/daily', [HRReportController::class, 'daily'])->name('daily');
-        Route::get('/weekly', [HRReportController::class, 'weekly'])->name('weekly');
-        Route::get('/monthly', [HRReportController::class, 'monthly'])->name('monthly');
         Route::get('/per-employee', [HRReportController::class, 'perEmployee'])->name('per-employee');
-        Route::get('/per-department', [HRReportController::class, 'perDepartment'])->name('per-department');
-        Route::get('/export-pdf', [HRReportController::class, 'exportPdf'])->name('export-pdf');
-        Route::get('/export-csv', [HRReportController::class, 'exportCsv'])->name('export-csv');
+        Route::get('/monthly', [HRReportController::class, 'monthly'])->name('monthly');
+        Route::match(['get', 'post'], '/export-pdf', [HRReportController::class, 'exportPdf'])->name('export-pdf');
     });
-    
+
     // DTR Export
-    Route::get('/dtr-export', [HRReportController::class, 'dtrExportPage'])->name('dtr-export');
-    Route::post('/dtr-export-pdf', [HRReportController::class, 'exportDtrPdf'])->name('dtr.export-pdf');
-    Route::post('/dtr-print-pdf', [HRReportController::class, 'printDtrPdf'])->name('dtr.export-pdf-print');
+    Route::prefix('dtr')->name('dtr.')->group(function () {
+        Route::post('/export-pdf', [HRReportController::class, 'exportDtrPdf'])->name('export-pdf');
+        Route::post('/print', [HRReportController::class, 'printDtrPdf'])->name('print');
+        Route::post('/export-excel', [HRReportController::class, 'exportDtrPdf'])->name('export-excel');
+    });
     Route::get('/dtr-template-upload', [HRReportController::class, 'dtrExportPage'])->name('dtr-template-upload');
-    Route::post('/dtr-export-excel', [HRReportController::class, 'exportDtrPdf'])->name('dtr.export-excel');
-    
-    // Events
-    Route::prefix('events')->name('events.')->group(function () {
-        Route::get('/', [HREventController::class, 'index'])->name('index');
-        Route::get('/create', [HREventController::class, 'create'])->name('create');
-        Route::post('/', [HREventController::class, 'store'])->name('store');
-        Route::get('/{id}', [HREventController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [HREventController::class, 'edit'])->name('edit');
-        Route::patch('/{id}', [HREventController::class, 'update'])->name('update');
-        Route::delete('/{id}', [HREventController::class, 'destroy'])->name('destroy');
-    });
-    
-    // Announcements
-    Route::prefix('announcements')->name('announcements.')->group(function () {
-        Route::get('/', [HRAnnouncementController::class, 'index'])->name('index');
-        Route::get('/create', [HRAnnouncementController::class, 'create'])->name('create');
-        Route::post('/', [HRAnnouncementController::class, 'store'])->name('store');
-        Route::get('/{id}', [HRAnnouncementController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [HRAnnouncementController::class, 'edit'])->name('edit');
-        Route::patch('/{id}', [HRAnnouncementController::class, 'update'])->name('update');
-        Route::delete('/{id}', [HRAnnouncementController::class, 'destroy'])->name('destroy');
-    });
 });
 
 // Admin routes
@@ -164,26 +156,16 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         Route::post('/{id}/reset-face', [EmployeesController::class, 'resetFaceEnrollment'])->name('reset_face');
     });
     
-    // Events
-    Route::prefix('events')->name('events.')->group(function () {
-        Route::get('/', [AdminEventController::class, 'index'])->name('index');
-        Route::get('/create', [AdminEventController::class, 'create'])->name('create');
-        Route::post('/', [AdminEventController::class, 'store'])->name('store');
-        Route::get('/{id}', [AdminEventController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [AdminEventController::class, 'edit'])->name('edit');
-        Route::patch('/{id}', [AdminEventController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AdminEventController::class, 'destroy'])->name('destroy');
-    });
-    
-    // Announcements
+
+    // Announcements (Admin) - use unified CampusUpdateController
     Route::prefix('announcements')->name('announcements.')->group(function () {
-        Route::get('/', [AdminAnnouncementController::class, 'index'])->name('index');
-        Route::get('/create', [AdminAnnouncementController::class, 'create'])->name('create');
-        Route::post('/', [AdminAnnouncementController::class, 'store'])->name('store');
-        Route::get('/{id}', [AdminAnnouncementController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [AdminAnnouncementController::class, 'edit'])->name('edit');
-        Route::patch('/{id}', [AdminAnnouncementController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AdminAnnouncementController::class, 'destroy'])->name('destroy');
+        Route::get('/', [CampusUpdateController::class, 'index'])->name('index');
+        Route::get('/create', [CampusUpdateController::class, 'create'])->name('create')->defaults('type', 'announcement');
+        Route::post('/', [CampusUpdateController::class, 'store'])->name('store')->defaults('type', 'announcement');
+        Route::get('/{id}', [CampusUpdateController::class, 'show'])->name('show')->defaults('type', 'announcement');
+        Route::get('/{id}/edit', [CampusUpdateController::class, 'edit'])->name('edit')->defaults('type', 'announcement');
+        Route::patch('/{id}', [CampusUpdateController::class, 'update'])->name('update')->defaults('type', 'announcement');
+        Route::delete('/{id}', [CampusUpdateController::class, 'destroy'])->name('destroy')->defaults('type', 'announcement');
     });
     
     // Audit Logs
@@ -194,7 +176,14 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     
     // Attendance
     Route::prefix('attendance')->name('attendance.')->group(function () {
-        Route::get('/', [AdminDashboardController::class, 'index'])->name('index');
+        Route::get('/', [\App\Http\Controllers\Admin\AttendanceController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\AttendanceController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Admin\AttendanceController::class, 'store'])->name('store');
+        Route::get('/{attendance}', [\App\Http\Controllers\Admin\AttendanceController::class, 'show'])->name('show');
+        Route::get('/{attendance}/edit', [\App\Http\Controllers\Admin\AttendanceController::class, 'edit'])->name('edit');
+        Route::match(['put', 'patch'], '/{attendance}', [\App\Http\Controllers\Admin\AttendanceController::class, 'update'])->name('update');
+        Route::delete('/{attendance}', [\App\Http\Controllers\Admin\AttendanceController::class, 'destroy'])->name('destroy');
+        Route::get('/today', [\App\Http\Controllers\Admin\AttendanceController::class, 'today'])->name('today');
     });
 });
 

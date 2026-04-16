@@ -5,18 +5,23 @@
 
 -- USERS TABLE (application users; separate from Supabase auth.users)
 CREATE TABLE IF NOT EXISTS public.users (
-    id              bigserial PRIMARY KEY,
-    name            varchar(255) NOT NULL,
-    email           varchar(255) NOT NULL UNIQUE,
-    email_verified_at timestamp with time zone NULL,
-    password        varchar(255) NOT NULL,
-    role            varchar(50) NOT NULL DEFAULT 'employee', -- employee, hr, admin, super_admin
-    faculty_id      varchar(255) UNIQUE NULL,
-    position        varchar(255) NULL,
-    department_id   bigint NULL,
-    remember_token  varchar(100) NULL,
-    created_at      timestamp(0) without time zone DEFAULT now() NOT NULL,
-    updated_at      timestamp(0) without time zone DEFAULT now() NOT NULL
+    id                 bigserial PRIMARY KEY,
+    name               varchar(255) NOT NULL,
+    email              varchar(255) NOT NULL UNIQUE,
+    email_verified_at  timestamp with time zone NULL,
+    password           varchar(255) NOT NULL,
+    role               varchar(50) NOT NULL DEFAULT 'employee', -- employee, hr, admin, super_admin
+    faculty_id         varchar(255) UNIQUE NULL,
+    position           varchar(255) NULL,
+    department_id      bigint NULL,
+    -- Face recognition fields (keep in sync with Laravel migration 2026_03_15_add_face_data_to_users_table)
+    face_encodings     jsonb NULL,
+    face_enrolled      boolean NOT NULL DEFAULT false,
+    face_samples_count integer NOT NULL DEFAULT 0,
+    face_enrolled_at   timestamp with time zone NULL,
+    remember_token     varchar(100) NULL,
+    created_at         timestamp(0) without time zone DEFAULT now() NOT NULL,
+    updated_at         timestamp(0) without time zone DEFAULT now() NOT NULL
 );
 
 -- Ensure roles are constrained to expected values
@@ -26,6 +31,10 @@ BEGIN
         SELECT 1 FROM pg_constraint
         WHERE conname = 'users_role_check_enum'
     ) THEN
+        -- Ensure role column exists even if users table was pre-existing
+        ALTER TABLE public.users
+        ADD COLUMN IF NOT EXISTS role varchar(50) NOT NULL DEFAULT 'employee';
+
         ALTER TABLE public.users
         ADD CONSTRAINT users_role_check_enum
         CHECK (role IN ('employee', 'hr', 'admin', 'super_admin'));
@@ -70,6 +79,10 @@ BEGIN
         SELECT 1 FROM pg_constraint
         WHERE conname = 'users_department_id_foreign'
     ) THEN
+        -- Ensure department_id column exists even if users table was pre-existing
+        ALTER TABLE public.users
+        ADD COLUMN IF NOT EXISTS department_id bigint NULL;
+
         ALTER TABLE public.users
         ADD CONSTRAINT users_department_id_foreign
         FOREIGN KEY (department_id)
@@ -98,17 +111,33 @@ BEGIN
         SELECT 1 FROM pg_constraint
         WHERE conname = 'attendance_status_check_enum'
     ) THEN
+        -- Ensure status column exists on pre-existing attendance table
+        ALTER TABLE public.attendance
+        ADD COLUMN IF NOT EXISTS status varchar(20) NOT NULL DEFAULT 'absent';
+
         ALTER TABLE public.attendance
         ADD CONSTRAINT attendance_status_check_enum
         CHECK (status IN ('present', 'absent', 'late', 'half_day', 'leave'));
     END IF;
 END $$;
 
-ALTER TABLE public.attendance
-    ADD CONSTRAINT attendance_user_id_foreign
-    FOREIGN KEY (user_id)
-    REFERENCES public.users(id)
-    ON DELETE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'attendance_user_id_foreign'
+    ) THEN
+        -- Ensure user_id column exists even if attendance table was pre-existing
+        ALTER TABLE public.attendance
+        ADD COLUMN IF NOT EXISTS user_id bigint NOT NULL;
+
+        ALTER TABLE public.attendance
+        ADD CONSTRAINT attendance_user_id_foreign
+        FOREIGN KEY (user_id)
+        REFERENCES public.users(id)
+        ON DELETE CASCADE;
+    END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS attendance_user_id_index ON public.attendance(user_id);
 CREATE INDEX IF NOT EXISTS attendance_attendance_date_index ON public.attendance(attendance_date);
@@ -134,17 +163,33 @@ BEGIN
         SELECT 1 FROM pg_constraint
         WHERE conname = 'events_status_check_enum'
     ) THEN
+        -- Ensure status column exists even if events table was pre-existing
+        ALTER TABLE public.events
+        ADD COLUMN IF NOT EXISTS status varchar(20) NOT NULL DEFAULT 'upcoming';
+
         ALTER TABLE public.events
         ADD CONSTRAINT events_status_check_enum
         CHECK (status IN ('upcoming', 'ongoing', 'completed', 'cancelled'));
     END IF;
 END $$;
 
-ALTER TABLE public.events
-    ADD CONSTRAINT events_created_by_foreign
-    FOREIGN KEY (created_by)
-    REFERENCES public.users(id)
-    ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'events_created_by_foreign'
+    ) THEN
+        -- Ensure created_by column exists even if events table was pre-existing
+        ALTER TABLE public.events
+        ADD COLUMN IF NOT EXISTS created_by bigint NULL;
+
+        ALTER TABLE public.events
+        ADD CONSTRAINT events_created_by_foreign
+        FOREIGN KEY (created_by)
+        REFERENCES public.users(id)
+        ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- LEAVE REQUESTS
 CREATE TABLE IF NOT EXISTS public.leave_requests (
@@ -167,6 +212,10 @@ BEGIN
         SELECT 1 FROM pg_constraint
         WHERE conname = 'leave_requests_leave_type_check_enum'
     ) THEN
+        -- Ensure leave_type column exists on pre-existing leave_requests table
+        ALTER TABLE public.leave_requests
+        ADD COLUMN IF NOT EXISTS leave_type varchar(20) NOT NULL DEFAULT 'vacation';
+
         ALTER TABLE public.leave_requests
         ADD CONSTRAINT leave_requests_leave_type_check_enum
         CHECK (leave_type IN ('sick', 'vacation', 'personal', 'emergency', 'other'));
@@ -179,23 +228,51 @@ BEGIN
         SELECT 1 FROM pg_constraint
         WHERE conname = 'leave_requests_status_check_enum'
     ) THEN
+        -- Ensure status column exists on pre-existing leave_requests table
+        ALTER TABLE public.leave_requests
+        ADD COLUMN IF NOT EXISTS status varchar(20) NOT NULL DEFAULT 'pending';
+
         ALTER TABLE public.leave_requests
         ADD CONSTRAINT leave_requests_status_check_enum
         CHECK (status IN ('pending', 'approved', 'rejected'));
     END IF;
 END $$;
 
-ALTER TABLE public.leave_requests
-    ADD CONSTRAINT leave_requests_user_id_foreign
-    FOREIGN KEY (user_id)
-    REFERENCES public.users(id)
-    ON DELETE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'leave_requests_user_id_foreign'
+    ) THEN
+        -- Ensure user_id column exists even if leave_requests table was pre-existing
+        ALTER TABLE public.leave_requests
+        ADD COLUMN IF NOT EXISTS user_id bigint NOT NULL;
 
-ALTER TABLE public.leave_requests
-    ADD CONSTRAINT leave_requests_approved_by_foreign
-    FOREIGN KEY (approved_by)
-    REFERENCES public.users(id)
-    ON DELETE SET NULL;
+        ALTER TABLE public.leave_requests
+        ADD CONSTRAINT leave_requests_user_id_foreign
+        FOREIGN KEY (user_id)
+        REFERENCES public.users(id)
+        ON DELETE CASCADE;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'leave_requests_approved_by_foreign'
+    ) THEN
+        -- Ensure approved_by column exists even if leave_requests table was pre-existing
+        ALTER TABLE public.leave_requests
+        ADD COLUMN IF NOT EXISTS approved_by bigint NULL;
+
+        ALTER TABLE public.leave_requests
+        ADD CONSTRAINT leave_requests_approved_by_foreign
+        FOREIGN KEY (approved_by)
+        REFERENCES public.users(id)
+        ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- AUDIT LOGS
 CREATE TABLE IF NOT EXISTS public.audit_logs (
@@ -211,11 +288,23 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
     updated_at   timestamp(0) without time zone DEFAULT now() NOT NULL
 );
 
-ALTER TABLE public.audit_logs
-    ADD CONSTRAINT audit_logs_user_id_foreign
-    FOREIGN KEY (user_id)
-    REFERENCES public.users(id)
-    ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'audit_logs_user_id_foreign'
+    ) THEN
+        -- Ensure user_id column exists even if audit_logs table was pre-existing
+        ALTER TABLE public.audit_logs
+        ADD COLUMN IF NOT EXISTS user_id bigint NULL;
+
+        ALTER TABLE public.audit_logs
+        ADD CONSTRAINT audit_logs_user_id_foreign
+        FOREIGN KEY (user_id)
+        REFERENCES public.users(id)
+        ON DELETE SET NULL;
+    END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS audit_logs_user_id_index ON public.audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS audit_logs_created_at_index ON public.audit_logs(created_at);
@@ -243,6 +332,10 @@ BEGIN
         SELECT 1 FROM pg_constraint
         WHERE conname = 'attendance_logs_period_check_enum'
     ) THEN
+        -- Ensure period column exists on pre-existing attendance_logs table
+        ALTER TABLE public.attendance_logs
+        ADD COLUMN IF NOT EXISTS period varchar(2) NOT NULL DEFAULT 'AM';
+
         ALTER TABLE public.attendance_logs
         ADD CONSTRAINT attendance_logs_period_check_enum
         CHECK (period IN ('AM', 'PM'));
@@ -255,17 +348,37 @@ BEGIN
         SELECT 1 FROM pg_constraint
         WHERE conname = 'attendance_logs_punch_type_check_enum'
     ) THEN
+        -- Ensure punch_type column exists on pre-existing attendance_logs table
+        ALTER TABLE public.attendance_logs
+        ADD COLUMN IF NOT EXISTS punch_type varchar(3) NOT NULL DEFAULT 'IN';
+
         ALTER TABLE public.attendance_logs
         ADD CONSTRAINT attendance_logs_punch_type_check_enum
         CHECK (punch_type IN ('IN', 'OUT'));
     END IF;
 END $$;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'attendance_logs_employee_id_foreign'
+    ) THEN
+        -- Ensure employee_id column exists even if attendance_logs table was pre-existing
+        ALTER TABLE public.attendance_logs
+        ADD COLUMN IF NOT EXISTS employee_id bigint NOT NULL;
+
+        ALTER TABLE public.attendance_logs
+        ADD CONSTRAINT attendance_logs_employee_id_foreign
+        FOREIGN KEY (employee_id)
+        REFERENCES public.users(id)
+        ON DELETE CASCADE;
+    END IF;
+END $$;
+
+-- Ensure log_date column exists on pre-existing attendance_logs table
 ALTER TABLE public.attendance_logs
-    ADD CONSTRAINT attendance_logs_employee_id_foreign
-    FOREIGN KEY (employee_id)
-    REFERENCES public.users(id)
-    ON DELETE CASCADE;
+    ADD COLUMN IF NOT EXISTS log_date date;
 
 CREATE INDEX IF NOT EXISTS attendance_logs_employee_id_index ON public.attendance_logs(employee_id);
 CREATE INDEX IF NOT EXISTS attendance_logs_log_date_index ON public.attendance_logs(log_date);

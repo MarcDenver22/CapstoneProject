@@ -1,29 +1,158 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
+@section('title', 'Profile')
+@section('header', 'Profile')
+@section('subheader', 'Manage your personal information')
+
+@section('content')
+
+<div class="max-w-2xl mx-auto">
+    <!-- Form Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Edit Your Profile</h2>
+
+        @if ($errors->any())
+            <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200">
+                <p class="text-red-700 font-semibold mb-2">Please fix the errors below:</p>
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li class="text-red-600 text-sm">{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if (session('success') || session('status'))
+            <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200">
+                <p class="text-green-700 font-semibold">{{ session('success') ?? session('status') }}</p>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ auth()->user()->role === 'hr' ? route('hr.profile.update') : (auth()->user()->role === 'admin' ? route('admin.profile.update') : route('profile.update')) }}" class="space-y-6">
+            @csrf
+            @method('PATCH')
+
+            <!-- Name -->
+            <div>
+                <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    value="{{ old('name', $user->name) }}" 
+                    placeholder="John Doe"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('name') border-red-500 @enderror"
+                    required
+                >
+                @error('name')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    value="{{ old('email', $user->email) }}" 
+                    placeholder="john@example.com"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('email') border-red-500 @enderror"
+                    required
+                >
+                @error('email')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Employee ID (read-only) -->
+            <div>
+                <label for="employee_id" class="block text-sm font-semibold text-gray-700 mb-2">Employee ID</label>
+                <input 
+                    type="text" 
+                    id="employee_id" 
+                    name="employee_id" 
+                    value="{{ $user->employee_id ?? 'N/A' }}" 
+                    placeholder="EMP001"
+                    disabled
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                >
+                <p class="text-gray-500 text-xs mt-1">Your Employee ID is auto-generated and cannot be changed</p>
+            </div>
+
+            <!-- Position and Department -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="position" class="block text-sm font-semibold text-gray-700 mb-2">Position</label>
+                    <input 
+                        type="text" 
+                        id="position" 
+                        name="position" 
+                        value="{{ old('position', $user->position) }}" 
+                        placeholder="e.g., HR Officer, HR Manager"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                </div>
+
+                @if(isset($departments))
+                <div>
+                    <label for="department_id" class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                    <select 
+                        id="department_id" 
+                        name="department_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <option value="">Select a department</option>
+                        @forelse($departments as $dept)
+                            <option value="{{ $dept->id }}" {{ old('department_id', $user->department_id) == $dept->id ? 'selected' : '' }}>
+                                {{ $dept->name }}
+                            </option>
+                        @empty
+                            <option value="" disabled>No departments available</option>
+                        @endforelse
+                    </select>
+                </div>
+                @elseif($user->department)
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                    <input 
+                        type="text" 
+                        value="{{ $user->department->name ?? 'N/A' }}" 
+                        disabled
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                    >
+                </div>
+                @endif
+            </div>
+
+            <!-- Account Info -->
+            <div class="p-4 rounded-lg bg-gray-50 border border-gray-200 space-y-3">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Email Address (Read-only)</p>
+                    <p class="text-sm text-gray-700">{{ $user->email }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Account Role</p>
+                    <p class="text-sm text-gray-700 capitalize">{{ $user->role }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Member Since</p>
+                    <p class="text-sm text-gray-700">{{ $user->created_at->format('F d, Y') }}</p>
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
+            <!-- Submit / Cancel -->
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition inline-flex items-center justify-center gap-2">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{{ auth()->user()->role === 'hr' ? route('hr.dashboard') : (auth()->user()->role === 'admin' ? route('admin.dashboard') : route('employee.dashboard')) }}" class="flex-1 px-6 py-3 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold transition inline-flex items-center justify-center gap-2">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
             </div>
-
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
-            </div>
-        </div>
+        </form>
     </div>
-</x-app-layout>
+</div>
+
+@endsection

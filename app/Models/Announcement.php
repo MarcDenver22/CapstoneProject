@@ -9,6 +9,8 @@ class Announcement extends Model
 {
     use HasFactory;
 
+    protected $connection = 'supabase';
+
     protected $fillable = [
         'title',
         'content',

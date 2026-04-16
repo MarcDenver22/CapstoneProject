@@ -62,7 +62,7 @@
         .sig-label { font-size: 7px; text-align: center; margin-top: 1px; line-height: 1; }
     </style>
 </head>
-<body>
+<body data-redirect-url="{{ $redirect_route ?? route('hr.reports.index') }}">
 <div class="two-col">
     <div class="col">
         <div class="form-block">
@@ -264,6 +264,31 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function() {
+        var redirectUrl = document.body.getAttribute('data-redirect-url');
+        var pageUnloading = false;
+        
+        // Open print immediately when page loads
+        window.addEventListener('load', function() {
+            window.print();
+        }, { once: true });
+
+        // Redirect when print dialog closes or is cancelled
+        window.addEventListener('afterprint', function() {
+            if (!pageUnloading) {
+                pageUnloading = true;
+                window.location.replace(redirectUrl);
+            }
+        }, { once: true });
+        
+        // Prevent re-triggering on unload
+        window.addEventListener('beforeunload', function() {
+            pageUnloading = true;
+        });
+    })();
+</script>
 </body>
 </html>
 

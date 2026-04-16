@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Dashboard')
 @section('header', 'Dashboard')
 @section('subheader', 'HR Management Portal')
 
@@ -83,34 +84,16 @@
 
             <!-- Filter Tabs -->
             <div class="px-6 pt-4 flex gap-2 border-b border-gray-200">
-                <button class="tab-btn active px-3 py-2 text-sm font-medium text-purple-600 border-b-2 border-purple-600 hover:text-purple-700" data-tab="all">
-                    All
-                </button>
-                <button class="tab-btn px-3 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-800" data-tab="events">
-                    <i class="fas fa-calendar-alt mr-1"></i>Events
-                </button>
-                <button class="tab-btn px-3 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-800" data-tab="announcements">
+                <button class="tab-btn active px-3 py-2 text-sm font-medium text-purple-600 border-b-2 border-purple-600 hover:text-purple-700" data-tab="announcements">
                     <i class="fas fa-bullhorn mr-1"></i>Announcements
                 </button>
             </div>
 
             <!-- Content List -->
             <div class="space-y-3 max-h-96 overflow-y-auto p-4 flex-1" id="items-container">
-                @forelse($eventsAndAnnouncements as $item)
-                    @if($item->type === 'event')
-                        <div class="item-card item-events bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all duration-200">
-                            <div class="flex items-start gap-3">
-                                <div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-calendar-alt text-blue-600 text-sm"></i>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-semibold text-gray-800 truncate">{{ $item->title }}</p>
-                                    <p class="text-xs text-gray-600 mt-1">{{ $item->display_date }} • {{ $item->location ?? 'TBD' }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <div class="item-card item-announcements bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:border-emerald-400 hover:shadow-md transition-all duration-200">
+                @forelse($activeAnnouncements as $item)
+                    @if($item->id)
+                        <div class="item-card item-announcements bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:border-emerald-400 hover:shadow-md transition-all duration-200 group" data-item-id="{{ $item->id }}" data-item-type="announcement">
                             <div class="flex items-start gap-3">
                                 <div class="w-9 h-9 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <i class="fas fa-bullhorn text-emerald-600 text-sm"></i>
@@ -122,6 +105,14 @@
                                         {{ ucfirst($item->priority ?? 'normal') }}
                                     </p>
                                 </div>
+                                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                    <a href="{{ route('admin.announcements.edit', $item->id) }}" class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition" title="Edit">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </a>
+                                    <button type="button" onclick="deleteItem('announcement', {{ $item->id }})" class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition" title="Delete">
+                                        <i class="fas fa-trash text-sm"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     @endif
@@ -132,8 +123,8 @@
 
             <!-- Action Buttons -->
             <div class="border-t border-gray-200 p-4 space-y-2">
-                <a href="{{ route('hr.events.index') }}" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-2.5 rounded-lg hover:shadow-md transition flex items-center justify-center gap-2 text-sm">
-                    <i class="fas fa-calendar"></i> Manage Calendar
+                <a href="{{ route('hr.announcements.index') }}" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold py-2.5 rounded-lg hover:shadow-md transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-bullhorn"></i> Manage Announcements
                 </a>
             </div>
         </div>
@@ -288,6 +279,40 @@
 
     window.addEventListener('pageshow', setupDashboard);
     window.addEventListener('popstate', setupDashboard);
+
+    // CRUD Delete Function
+    function deleteItem(type, id) {
+        if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
+
+        const url = type === 'event' 
+            ? `/admin/events/${id}` 
+            : `/admin/announcements/${id}`;
+
+        fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                // Remove the item from DOM
+                document.querySelector(`[data-item-id="${id}"]`).remove();
+                
+                // Check if any items left
+                const itemsContainer = document.getElementById('items-container');
+                if (itemsContainer.querySelectorAll('.item-card').length === 0) {
+                    document.getElementById('empty-state').style.display = 'block';
+                }
+                
+                alert(`${type} deleted successfully!`);
+            } else {
+                alert('Error deleting ' + type);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
 </script>
 
 @endsection

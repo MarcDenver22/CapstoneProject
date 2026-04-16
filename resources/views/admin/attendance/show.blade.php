@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Attendance Details')
 @section('header', 'Attendance Details')
 @section('subheader', 'View attendance record')
 

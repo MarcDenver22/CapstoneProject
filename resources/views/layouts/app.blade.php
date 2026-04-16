@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Faculty Employee Portal</title>
+    <title>@yield('title', 'Dashboard') - PSU</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ asset('images/psu logo.png') }}">
@@ -119,6 +119,59 @@
             background: rgba(0, 0, 0, 0.08);
             margin: 4px 0;
         }
+
+        /* Active navigation link styling */
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+
+        /* EMPLOYEE Active state - Blue */
+        .nav-link.active-employee {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            border-left: 3px solid #2563eb;
+            padding-left: calc(0.75rem - 3px);
+        }
+
+        .nav-link.active-employee i {
+            color: #2563eb;
+        }
+
+        /* HR Active state - Purple */
+        .nav-link.active-hr {
+            background: rgba(147, 51, 234, 0.1);
+            color: #7e22ce;
+            border-left: 3px solid #7e22ce;
+            padding-left: calc(0.75rem - 3px);
+        }
+
+        .nav-link.active-hr i {
+            color: #7e22ce;
+        }
+
+        /* ADMIN Active state - Indigo */
+        .nav-link.active-admin {
+            background: rgba(99, 102, 241, 0.1);
+            color: #4f46e5;
+            border-left: 3px solid #4f46e5;
+            padding-left: calc(0.75rem - 3px);
+        }
+
+        .nav-link.active-admin i {
+            color: #4f46e5;
+        }
+
+        /* SUPER ADMIN Active state - Red */
+        .nav-link.active-super-admin {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border-left: 3px solid #dc2626;
+            padding-left: calc(0.75rem - 3px);
+        }
+
+        .nav-link.active-super-admin i {
+            color: #dc2626;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -136,13 +189,13 @@
                         <p class="text-xs text-red-600">System Control</p>
                     @elseif(auth()->user() && auth()->user()->role === 'admin')
                         <h1 class="text-lg font-bold text-indigo-700">Admin</h1>
-                        <p class="text-xs text-indigo-600">Dashboard</p>
+                        <p class="text-xs text-indigo-600">Portal</p>
                     @elseif(auth()->user() && auth()->user()->role === 'hr')
-                        <h1 class="text-lg font-bold text-purple-700">HR Portal</h1>
-                        <p class="text-xs text-purple-600">Management</p>
+                        <h1 class="text-lg font-bold text-purple-700">HR</h1>
+                        <p class="text-xs text-purple-600">Portal</p>
                     @else
-                        <h1 class="text-lg font-bold text-blue-700">FaceTrack</h1>
-                        <p class="text-xs text-blue-600">Employee Portal</p>
+                        <h1 class="text-lg font-bold text-blue-700">Employee</h1>
+                        <p class="text-xs text-blue-600">Portal</p>
                     @endif
                 </div>
             </div>
@@ -156,22 +209,22 @@
                     <p class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-3 px-2">My Account</p>
                     <div class="space-y-1">
                         <!-- Dashboard -->
-                        <a href="{{ route('employee.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                        <a href="{{ route('employee.dashboard') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group {{ request()->routeIs('employee.dashboard') ? 'active-employee' : '' }}">
                             <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
                             <span class="text-sm font-medium">Dashboard</span>
                         </a>
-                        <!-- Attendance History -->
-                        <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                        <!-- DTR -->
+                        <a href="{{ route('employee.attendance-history') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group {{ request()->routeIs('employee.attendance-history') ? 'active-employee' : '' }}">
                             <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
-                            <span class="text-sm font-medium">Attendance History</span>
+                            <span class="text-sm font-medium">DTR</span>
                         </a>
                         <!-- Leave Requests -->
-                        <a href="{{ route('employee.leave-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                        <a href="{{ route('employee.leave-requests.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group {{ request()->routeIs('employee.leave-requests.*') ? 'active-employee' : '' }}">
                             <i class="fas fa-calendar-times w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
                             <span class="text-sm font-medium">Leave Requests</span>
                         </a>
                         <!-- Profile -->
-                        <a href="{{ route('employee.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group">
+                        <a href="{{ route('employee.profile.edit') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition group {{ request()->routeIs('employee.profile.*') ? 'active-employee' : '' }}">
                             <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-blue-600"></i>
                             <span class="text-sm font-medium">Profile</span>
                         </a>
@@ -185,22 +238,22 @@
                     <p class="text-xs font-bold text-purple-500 uppercase tracking-widest mb-3 px-2">My Account</p>
                     <div class="space-y-1">
                         <!-- Dashboard -->
-                        <a href="{{ route('hr.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                        <a href="{{ route('hr.dashboard') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group {{ request()->routeIs('hr.dashboard') ? 'active-hr' : '' }}">
                             <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Dashboard</span>
                         </a>
-                        <!-- Attendance History -->
-                        <a href="{{ route('employee.attendance-history') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                        <!-- DTR -->
+                        <a href="{{ route('hr.attendance-history') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group {{ request()->routeIs('hr.attendance-history') ? 'active-hr' : '' }}">
                             <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
-                            <span class="text-sm font-medium">Attendance History</span>
+                            <span class="text-sm font-medium">DTR</span>
                         </a>
                         <!-- Leave Requests -->
-                        <a href="{{ route('employee.leave-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                        <a href="{{ route('employee.leave-requests.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group {{ request()->routeIs('employee.leave-requests.*') ? 'active-hr' : '' }}">
                             <i class="fas fa-calendar-times w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Leave Requests</span>
                         </a>
                         <!-- Profile -->
-                        <a href="{{ route('hr.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                        <a href="{{ route('hr.profile.edit') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group {{ request()->routeIs('hr.profile.*') ? 'active-hr' : '' }}">
                             <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Profile</span>
                         </a>
@@ -211,12 +264,12 @@
                     <p class="text-xs font-bold text-purple-500 uppercase tracking-widest mb-3 px-2">Management</p>
                     <div class="space-y-1">
                         <!-- Reports -->
-                        <a href="{{ route('hr.reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                        <a href="{{ route('hr.reports.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group {{ request()->routeIs('hr.reports.*') ? 'active-hr' : '' }}">
                             <i class="fas fa-chart-bar w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Attendance Reports</span>
                         </a>
                         <!-- Campus Updates -->
-                        <a href="{{ route('hr.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group">
+                        <a href="{{ route('hr.announcements.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition group {{ request()->routeIs('hr.announcements.*') ? 'active-hr' : '' }}">
                             <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-purple-600"></i>
                             <span class="text-sm font-medium">Campus Updates</span>
                         </a>
@@ -230,32 +283,32 @@
                     <p class="text-xs font-bold text-red-500 uppercase tracking-widest mb-3 px-2">Super Admin</p>
                     <div class="space-y-1">
                         <!-- System Dashboard -->
-                        <a href="{{ route('super_admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                        <a href="{{ route('super_admin.dashboard') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group {{ request()->routeIs('super_admin.dashboard') ? 'active-super-admin' : '' }}">
                             <i class="fas fa-tachometer-alt w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">System Dashboard</span>
                         </a>
                         <!-- User Management -->
-                        <a href="{{ route('super_admin.users.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                        <a href="{{ route('super_admin.users.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group {{ request()->routeIs('super_admin.users.*') ? 'active-super-admin' : '' }}">
                             <i class="fas fa-users-cog w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">User Management</span>
                         </a>
                         <!-- System Config -->
-                        <a href="{{ route('super_admin.system_config') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                        <a href="{{ route('super_admin.system_config') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group {{ request()->routeIs('super_admin.system_config') ? 'active-super-admin' : '' }}">
                             <i class="fas fa-sliders-h w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">System Config</span>
                         </a>
                         <!-- Audit Logs -->
-                        <a href="{{ route('super_admin.audit_logs') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                        <a href="{{ route('super_admin.audit_logs') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group {{ request()->routeIs('super_admin.audit_logs') ? 'active-super-admin' : '' }}">
                             <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">Audit Logs</span>
                         </a>
                         <!-- System Health -->
-                        <a href="{{ route('super_admin.system_health') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                        <a href="{{ route('super_admin.system_health') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group {{ request()->routeIs('super_admin.system_health') ? 'active-super-admin' : '' }}">
                             <i class="fas fa-heartbeat w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">System Health</span>
                         </a>
                         <!-- Profile -->
-                        <a href="{{ route('super_admin.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group">
+                        <a href="{{ route('super_admin.profile.edit') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition group {{ request()->routeIs('super_admin.profile.*') ? 'active-super-admin' : '' }}">
                             <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-red-600"></i>
                             <span class="text-sm font-medium">Profile</span>
                         </a>
@@ -269,17 +322,17 @@
                     <p class="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3 px-2">Admin Management</p>
                     <div class="space-y-1">
                         <!-- Dashboard -->
-                        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.dashboard') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.dashboard') ? 'active-admin' : '' }}">
                             <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Dashboard</span>
                         </a>
                         <!-- Employees -->
-                        <a href="{{ route('admin.employees.list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.employees.list') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.employees.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-users w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Employees</span>
                         </a>
                         <!-- Attendance Log -->
-                        <a href="{{ route('admin.attendance.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.attendance.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.attendance.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-calendar-check w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Attendance Log</span>
                         </a>
@@ -290,20 +343,15 @@
                 <div>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Reports</p>
                     <div class="space-y-1">
-                        <!-- DTR Reports -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <!-- Attendance Reports -->
+                        <a href="{{ route('hr.reports.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('hr.reports.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-file-alt w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">DTR Reports</span>
+                            <span class="text-sm font-medium">Attendance Reports</span>
                         </a>
                         <!-- Campus Updates -->
-                        <a href="{{ route('admin.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.announcements.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.announcements.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Campus Updates</span>
-                        </a>
-                        <!-- Export -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
-                            <i class="fas fa-download w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">Export</span>
                         </a>
                     </div>
                 </div>
@@ -315,22 +363,22 @@
                     <p class="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3 px-2">Main</p>
                     <div class="space-y-1">
                         <!-- Dashboard -->
-                        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.dashboard') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.dashboard') ? 'active-admin' : '' }}">
                             <i class="fas fa-chart-line w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Dashboard</span>
                         </a>
                         <!-- Employees -->
-                        <a href="{{ route('admin.employees.list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.employees.list') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.employees.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-users w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Employees</span>
                         </a>
                         <!-- Attendance Log -->
-                        <a href="{{ route('admin.attendance.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.attendance.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.attendance.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-calendar-check w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Attendance Log</span>
                         </a>
                         <!-- Profile -->
-                        <a href="{{ route('admin.profile.edit') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.profile.edit') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.profile.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-user w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Profile</span>
                         </a>
@@ -341,20 +389,15 @@
                 <div>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">Reports</p>
                     <div class="space-y-1">
-                        <!-- DTR Reports -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <!-- Attendance Reports -->
+                        <a href="{{ route('hr.reports.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('hr.reports.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-file-alt w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">DTR Reports</span>
+                            <span class="text-sm font-medium">Attendance Reports</span>
                         </a>
                         <!-- Campus Updates -->
-                        <a href="{{ route('admin.events.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.announcements.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.announcements.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-bullhorn w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Campus Updates</span>
-                        </a>
-                        <!-- Export -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
-                            <i class="fas fa-download w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">Export</span>
                         </a>
                     </div>
                 </div>
@@ -364,14 +407,9 @@
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2">System</p>
                     <div class="space-y-1">
                         <!-- Audit Logs -->
-                        <a href="{{ route('admin.audit_logs.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
+                        <a href="{{ route('admin.audit_logs.index') }}" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group {{ request()->routeIs('admin.audit_logs.*') ? 'active-admin' : '' }}">
                             <i class="fas fa-history w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
                             <span class="text-sm font-medium">Audit Logs</span>
-                        </a>
-                        <!-- Settings -->
-                        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition group">
-                            <i class="fas fa-cog w-5 text-center text-gray-400 group-hover:text-indigo-600"></i>
-                            <span class="text-sm font-medium">Settings</span>
                         </a>
                     </div>
                 </div>
@@ -404,8 +442,11 @@
                 </div>
                 <div class="flex items-center gap-4">
                     @if(auth()->user() && (auth()->user()->role === 'employee' || auth()->user()->role === 'hr'))
-                        <!-- Enroll Face Button for Employees -->
-                        <a href="{{ route('employee.face_enrollment.show') }}" class="px-4 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm transition flex items-center gap-2">
+                        <!-- Enroll Face Button for Employees & HR (reuse employee route) -->
+                        @php
+                            $faceEnrollmentRoute = route('employee.face_enrollment.show');
+                        @endphp
+                        <a href="{{ $faceEnrollmentRoute }}" class="px-4 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm transition flex items-center gap-2">
                             <i class="fas fa-camera"></i> Enroll Face
                         </a>
                     @endif

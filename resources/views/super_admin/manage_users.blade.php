@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'User Management')
 @section('header', 'User Management')
 @section('subheader', 'Manage system users and roles')
 

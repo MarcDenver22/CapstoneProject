@@ -1,31 +1,26 @@
 @extends('layouts.app')
 
-@section('header', 'Manage Employees')
+@section('title', 'Employees')
+@section('header', 'Employees')
 @section('subheader', 'View and manage all registered employees')
 
 @section('content')
 
-<!-- Header -->
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h2 class="text-2xl font-bold text-gray-800">Employee List</h2>
-        <p class="text-gray-600 text-sm mt-1">{{ $totalEmployees }} total employees registered</p>
-    </div>
-    <a href="{{ route('admin.employees.create') }}" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-        <i class="fas fa-user-plus mr-2"></i> Add Employee
-    </a>
-</div>
-
-<!-- Search -->
+<!-- Header with Search and Add Button -->
 <div class="mb-6">
-    <form method="GET" action="{{ route('admin.employees.list') }}" class="flex gap-3">
+    <div class="flex gap-3 items-center">
         <div class="flex-1 relative">
             <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name, email, position..."
+            <input 
+                type="text" 
+                id="employeeSearchInput"
+                placeholder="Search by name, email, position..."
                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
-        <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Search</button>
-    </form>
+        <a href="{{ route('admin.employees.create') }}" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold whitespace-nowrap">
+            <i class="fas fa-user-plus mr-2"></i> Add Employee
+        </a>
+    </div>
 </div>
 
 <!-- Table -->
@@ -45,7 +40,7 @@
             </thead>
             <tbody>
                 @forelse($employees as $employee)
-                    <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
+                    <tr class="border-b border-gray-200 hover:bg-gray-50 transition employee-row" data-employee-name="{{ strtolower($employee->name ?? '') }}" data-employee-email="{{ strtolower($employee->email ?? '') }}" data-employee-position="{{ strtolower($employee->position ?? '') }}">
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-2">
                                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
@@ -99,5 +94,47 @@
         {{ $employees->links() }}
     </div>
 @endif
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('employeeSearchInput');
+        
+        if (!searchInput) return;
+        
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('tbody tr.employee-row');
+            let visibleCount = 0;
+            
+            tableRows.forEach(row => {
+                const employeeName = row.getAttribute('data-employee-name') || '';
+                const employeeEmail = row.getAttribute('data-employee-email') || '';
+                const employeePosition = row.getAttribute('data-employee-position') || '';
+                const searchText = employeeName + ' ' + employeeEmail + ' ' + employeePosition;
+                
+                // Show/hide row based on search match
+                if (searchText.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show "no results" message if no rows match
+            const tbody = document.querySelector('tbody');
+            let noResultsRow = document.querySelector('tbody .no-results-row');
+            
+            if (visibleCount === 0 && tableRows.length > 0 && tbody && !noResultsRow) {
+                noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results-row';
+                noResultsRow.innerHTML = '<td colspan="7" class="py-8 text-center text-gray-500"><i class="fas fa-search text-2xl mb-2 block"></i><p class="font-medium">No employees match your search</p></td>';
+                tbody.appendChild(noResultsRow);
+            } else if (visibleCount > 0 && noResultsRow) {
+                noResultsRow.remove();
+            }
+        });
+    });
+</script>
 
 @endsection

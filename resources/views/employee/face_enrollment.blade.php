@@ -1,5 +1,6 @@
-@extends('employee.layouts.app')
+@extends('layouts.app')
 
+@section('title', 'Face Enrollment')
 @section('header', 'Face Enrollment')
 @section('subheader', 'Register your face for authentication')
 

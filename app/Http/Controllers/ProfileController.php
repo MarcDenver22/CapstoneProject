@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Department;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,25 +17,61 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        /** @var \App\Models\User|null $user */
+        $user = $request->user();
+        
+        // Load department and fetch all active departments for dropdown (all roles)
+        if ($user) {
+            $user->load('department');
+            $departments = Department::on('supabase')->where('is_active', true)->get();
+            return view('profile.edit', [
+                'user' => $user,
+                'departments' => $departments,
+            ]);
+        }
+        
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
         ]);
     }
 
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        /** @var \App\Models\User|null $user */
+        $user = $request->user();
+        
+        // Build validation rules - allow all roles to update position and department
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . ($user?->id ?? 'NULL'),
+            'position' => 'nullable|string|max:255',
+            'department_id' => 'nullable|exists:supabase.departments,id',
+        ];
+        
+        $validated = $request->validate($rules);
+        
+        // Update user profile
+        if ($user) {
+            $user->fill($validated);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+            if ($user->isDirty('email')) {
+                $user->email_verified_at = null;
+            }
+
+            $user->save();
         }
 
-        $request->user()->save();
-
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        if ($user && $user->role === 'hr') {
+            $redirectRoute = 'hr.profile.edit';
+        } elseif ($user && $user->role === 'admin') {
+            $redirectRoute = 'admin.profile.edit';
+        } else {
+            $redirectRoute = 'profile.edit';
+        }
+        return Redirect::route($redirectRoute)->with('status', 'profile-updated');
     }
 
     /**

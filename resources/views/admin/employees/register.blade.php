@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Employee Registration')
 @section('header', 'Employee Registration')
 @section('subheader', 'Register a new employee to the system')
 

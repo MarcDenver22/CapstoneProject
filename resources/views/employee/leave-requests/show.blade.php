@@ -1,5 +1,6 @@
-@extends('employee.layouts.app')
+@extends('layouts.app')
 
+@section('title', 'Leave Request Details')
 @section('header', 'Leave Request Details')
 @section('subheader', 'View your request information')
 
@@ -105,7 +106,6 @@
             </a>
             <form action="{{ route('employee.leave-requests.cancel', $leaveRequest->id) }}" method="POST" class="w-full" onsubmit="return confirm('Are you sure you want to cancel this request?');">
                 @csrf
-                @method('DELETE')
                 <button type="submit" class="w-full px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold transition flex items-center justify-center gap-2">
                     <i class="fas fa-trash"></i> Cancel Request
                 </button>

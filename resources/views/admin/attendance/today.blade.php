@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Today\'s Attendance')
 @section('header', 'Today\'s Attendance')
 @section('subheader', "Attendance records for {{ now()->format('M d, Y') }}")
 

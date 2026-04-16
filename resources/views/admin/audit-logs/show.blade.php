@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Audit Log Details')
 @section('header', 'Audit Log Details')
 @section('subheader', 'View activity details')
 

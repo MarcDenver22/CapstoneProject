@@ -40,7 +40,7 @@ class DepartmentSeeder extends Seeder
         ];
 
         foreach ($departments as $dept) {
-            Department::create($dept);
+            Department::on('supabase')->create($dept);
         }
 
         $this->command->info('✓ Departments seeded successfully!');

@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Dashboard')
 @section('header', 'Dashboard')
 @section('subheader', 'Weekly Attendance Overview')
 
@@ -123,59 +124,84 @@
             </div>
             
             <div class="p-6">
-                <div class="relative mb-4">
-                    <input type="text" placeholder="Search employee..." class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
-                    <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
-                </div>
-                
                 <!-- Attendance Table -->
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b-2 border-indigo-300 bg-gradient-to-r from-indigo-50 to-purple-50">
-                                <th class="text-left py-4 px-4 font-bold text-gray-800">EMPLOYEE</th>
-                                <th class="text-left py-4 px-4 font-bold text-gray-800">DEPT.</th>
-                                <th class="text-left py-4 px-4 font-bold text-gray-800">TIME-IN</th>
-                                <th class="text-left py-4 px-4 font-bold text-gray-800">TIME-OUT</th>
-                                <th class="text-left py-4 px-4 font-bold text-gray-800">STATUS</th>
-                                <th class="text-center py-4 px-4 font-bold text-gray-800">LIVENESS</th>
+                            <tr class="border-b border-gray-300 bg-gray-50">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">EMPLOYEE</th>
+                                <th colspan="2" class="text-center py-3 px-4 font-semibold text-gray-700 border-r border-gray-300">A.M.</th>
+                                <th colspan="2" class="text-center py-3 px-4 font-semibold text-gray-700 border-r border-gray-300">P.M.</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">STATUS</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">LIVENESS</th>
+                            </tr>
+                            <tr class="border-b border-gray-300 bg-gray-50">
+                                <th></th>
+                                <th class="text-center py-2 px-4 font-semibold text-gray-700 border-r border-gray-300 text-xs">Arrival</th>
+                                <th class="text-center py-2 px-4 font-semibold text-gray-700 border-r border-gray-300 text-xs">Departure</th>
+                                <th class="text-center py-2 px-4 font-semibold text-gray-700 border-r border-gray-300 text-xs">Arrival</th>
+                                <th class="text-center py-2 px-4 font-semibold text-gray-700 border-r border-gray-300 text-xs">Departure</th>
+                                <th colspan="2"></th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($todayAttendance as $record)
-                                <tr class="border-b border-gray-100 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-150">
-                                    <td class="py-3 px-4 font-semibold text-gray-900">{{ $record->user->name }}</td>
-                                    <td class="py-3 px-4 text-gray-600">{{ $record->user->department_name ?? 'N/A' }}</td>
-                                    <td class="py-3 px-4 text-gray-600 font-medium">
-                                        @if($record->time_in)
-                                            {{ $record->time_in->format('H:i') }}
-                                        @else
-                                            <span class="text-gray-400">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-3 px-4 text-gray-600 font-medium">
-                                        @if($record->time_out)
-                                            {{ $record->time_out->format('H:i') }}
-                                        @else
-                                            <span class="text-gray-400">—</span>
-                                        @endif
-                                    </td>
+                                <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
                                     <td class="py-3 px-4">
-                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ring-1 {{ $record->getStatusBadgeClass() }}">
+                                        <p class="font-medium text-gray-900">{{ $record->user->name ?? 'N/A' }}</p>
+                                        <p class="text-xs text-gray-500">{{ $record->user->email ?? '-' }}</p>
+                                    </td>
+                                    <!-- A.M. Arrival -->
+                                    <td class="py-3 px-4 text-center border-r border-gray-300">
+                                        @php
+                                            $timeIn = $record->time_in;
+                                            $amArrival = null;
+                                            if ($timeIn) {
+                                                $time = \Carbon\Carbon::createFromFormat('H:i:s', $timeIn) ?? \Carbon\Carbon::createFromFormat('H:i', $timeIn);
+                                                $amArrival = $time && $time->hour < 12 ? $time->format('H:i') : null;
+                                            }
+                                        @endphp
+                                        @if($amArrival)
+                                            <span class="text-gray-600 font-medium">{{ $amArrival }}</span>
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    <!-- A.M. Departure -->
+                                    <td class="py-3 px-4 text-center border-r border-gray-300">
+                                        <span class="text-gray-400">—</span>
+                                    </td>
+                                    <!-- P.M. Arrival -->
+                                    <td class="py-3 px-4 text-center border-r border-gray-300">
+                                        <span class="text-gray-400">—</span>
+                                    </td>
+                                    <!-- P.M. Departure -->
+                                    <td class="py-3 px-4 text-center border-r border-gray-300">
+                                        @php
+                                            $timeOut = $record->time_out;
+                                            if ($timeOut) {
+                                                echo '<span class="text-gray-600 font-medium">' . substr($timeOut, 0, 5) . '</span>';
+                                            } else {
+                                                echo '<span class="text-gray-400">—</span>';
+                                            }
+                                        @endphp
+                                    </td>
+                                    <td class="py-3 px-4 border-r border-gray-300">
+                                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $record->getStatusBadgeClass() }}">
                                             {{ ucfirst(str_replace('_', ' ', $record->status)) }}
                                         </span>
                                     </td>
-                                    <td class="py-3 px-4 text-center">
+                                    <td class="py-3 px-4">
                                         @if($record->liveness_verified)
-                                            <span class="text-green-600 font-bold text-lg">✓</span>
+                                            <span class="text-green-600 font-semibold text-sm">✓</span>
                                         @else
-                                            <span class="text-red-600 font-bold text-lg">✕</span>
+                                            <span class="text-red-600 font-semibold text-sm">✕</span>
                                         @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr class="border-b border-gray-100">
-                                    <td colspan="6" class="py-12 text-center text-gray-500">
+                                    <td colspan="8" class="py-12 text-center text-gray-500">
                                         <i class="fas fa-inbox text-4xl text-gray-300 mb-3 block"></i>
                                         <p class="font-medium">No attendance records to display</p>
                                     </td>
@@ -198,38 +224,11 @@
                 <h2 class="text-lg font-bold text-gray-800">Campus Updates</h2>
             </div>
             
-            <!-- Filter Tabs -->
-            <div class="flex gap-2 mb-4 border-b border-gray-200">
-                <button class="tab-btn active px-3 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600 hover:text-blue-700" data-tab="all">
-                    All
-                </button>
-                <button class="tab-btn px-3 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-800" data-tab="events">
-                    <i class="fas fa-calendar-alt mr-1"></i>Events
-                </button>
-                <button class="tab-btn px-3 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-800" data-tab="announcements">
-                    <i class="fas fa-bullhorn mr-1"></i>Announcements
-                </button>
-            </div>
-            
             <!-- Content List -->
             <div class="space-y-3 max-h-96 overflow-y-auto">
-                @forelse($upcomingEvents as $event)
-                    <div class="item-card item-events p-3 border border-gray-200 rounded-lg hover:shadow-md transition">
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-calendar-alt text-blue-600"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-semibold text-gray-800 truncate">{{ $event->title }}</p>
-                                <p class="text-xs text-gray-500 mt-1">{{ $event->start_date->format('M d') }} • {{ $event->location ?? 'TBD' }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                @endforelse
-
                 @forelse($activeAnnouncements as $announcement)
-                    <div class="item-card item-announcements p-3 border border-gray-200 rounded-lg hover:shadow-md transition">
+                    @if($announcement->id)
+                    <div class="item-card item-announcements p-3 border border-gray-200 rounded-lg hover:shadow-md transition group" data-item-id="{{ $announcement->id }}" data-item-type="announcement">
                         <div class="flex items-start gap-3">
                             <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <i class="fas fa-bullhorn text-green-600"></i>
@@ -241,21 +240,27 @@
                                     {{ ucfirst($announcement->priority ?? 'normal') }}
                                 </p>
                             </div>
+                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                                <a href="{{ route('admin.announcements.edit', $announcement->id) }}" class="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition text-xs" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" onclick="deleteItem('announcement', {{ $announcement->id }})" class="p-1.5 text-red-600 hover:bg-red-100 rounded transition text-xs" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
+                    @endif
                 @empty
                 @endforelse
 
-                @if($upcomingEvents->isEmpty() && $activeAnnouncements->isEmpty())
+                @if($activeAnnouncements->isEmpty())
                     <p class="text-center text-gray-500 text-sm py-8" id="empty-state">No items to display</p>
                 @endif
             </div>
             
             <!-- Footer Actions -->
             <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
-                <a href="{{ route('admin.events.index') }}" class="text-blue-600 text-sm font-semibold hover:underline inline-flex items-center gap-1 flex-1">
-                    <i class="fas fa-calendar"></i> Manage Calendar
-                </a>
                 <a href="{{ route('admin.announcements.index') }}" class="text-green-600 text-sm font-semibold hover:underline inline-flex items-center gap-1 flex-1">
                     <i class="fas fa-pen"></i> Manage Announcements
                 </a>
@@ -313,6 +318,41 @@
                     emptyState.classList.toggle('hidden', visibleCount > 0);
                 });
             });
+
+            // CRUD Delete Function
+            function deleteItem(type, id) {
+                if (!confirm(`Are you sure you want to delete this ${type}?`)) return;
+
+                const url = type === 'event' 
+                    ? `/admin/events/${id}` 
+                    : `/admin/announcements/${id}`;
+
+                fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Remove the item from DOM
+                        document.querySelector(`[data-item-id="${id}"]`).remove();
+                        
+                        // Check if any items left
+                        const items = document.querySelectorAll('.item-card');
+                        const emptyState = document.getElementById('empty-state');
+                        if (items.length === 0 && emptyState) {
+                            emptyState.classList.remove('hidden');
+                        }
+                        
+                        alert(`${type} deleted successfully!`);
+                    } else {
+                        alert('Error deleting ' + type);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
         </script>
 
         <!-- Recent Audit Log -->

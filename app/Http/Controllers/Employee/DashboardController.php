@@ -53,7 +53,8 @@ class DashboardController extends Controller
         $lateArrivals = $monthlyAttendance->where('status', 'late')->count();
 
         // Today's attendance
-        $todayAttendance = Attendance::where('user_id', $user->id)
+        $todayAttendance = Attendance::on('supabase')
+            ->where('user_id', $user->id)
             ->where('attendance_date', Carbon::now()->toDateString())
             ->first();
 
@@ -68,13 +69,15 @@ class DashboardController extends Controller
             ->get();
 
         // Leave Request Stats
-        $leaveRequests = LeaveRequest::where('user_id', $user->id)->get();
+        $leaveRequests = LeaveRequest::on('supabase')
+            ->where('user_id', $user->id)->get();
         $pendingLeaves = $leaveRequests->where('status', 'pending')->count();
         $approvedLeaves = $leaveRequests->where('status', 'approved')->count();
         $rejectedLeaves = $leaveRequests->where('status', 'rejected')->count();
         
         // All leave requests ordered by most recent
-        $allLeaveRequests = LeaveRequest::where('user_id', $user->id)
+        $allLeaveRequests = LeaveRequest::on('supabase')
+            ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -83,7 +86,8 @@ class DashboardController extends Controller
         $totalHours = 0;
         $totalMinutes = 0;
 
-        $allAttendanceRecords = Attendance::where('user_id', $user->id)
+        $allAttendanceRecords = Attendance::on('supabase')
+            ->where('user_id', $user->id)
             ->whereYear('attendance_date', $currentYear)
             ->whereMonth('attendance_date', $currentMonth)
             ->orderBy('attendance_date', 'asc')
@@ -154,62 +158,22 @@ class DashboardController extends Controller
             }
         }
 
-        // If no real data, add sample data for demonstration
-        if ($allAttendanceRecords->count() === 0) {
-            $sampleDays = [1, 3, 4, 5, 8, 9, 11, 12, 15, 16, 18, 19, 22, 23, 25];
-            foreach ($sampleDays as $day) {
-                $daysData[$day] = [
-                    'am_arrival' => '08:' . str_pad(rand(0, 30), 2, '0', STR_PAD_LEFT),
-                    'am_depart' => '12:00',
-                    'pm_arrival' => '13:00',
-                    'pm_depart' => '17:' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT),
-                    'undertime_hours' => 0,
-                    'undertime_minutes' => 0
-                ];
-            }
-        }
+        // If no real data, all daysData entries will remain empty
+        // No sample data generation needed
 
         // Fetch active announcements and events for employee dashboard
-        $announcements = Announcement::active()
+        $announcements = Announcement::on('supabase')
+            ->active()
             ->byPriority()
             ->limit(5)
             ->get();
 
-        $events = Event::orderBy('start_date', 'desc')
+        $events = Event::on('supabase')
+            ->orderBy('start_date', 'desc')
             ->limit(5)
             ->get();
 
-        // If no events exist, create sample events for demonstration
-        if ($events->count() === 0) {
-            $sampleEvents = [
-                [
-                    'title' => 'Team Meeting',
-                    'description' => 'Monthly team sync-up meeting',
-                    'start_date' => now()->addDays(3),
-                    'end_date' => now()->addDays(3)->addHours(1),
-                    'location' => 'Conference Room A',
-                    'status' => 'upcoming'
-                ],
-                [
-                    'title' => 'Training Workshop',
-                    'description' => 'Professional development workshop',
-                    'start_date' => now()->addDays(7),
-                    'end_date' => now()->addDays(7)->addHours(3),
-                    'location' => 'Building B - Hall 101',
-                    'status' => 'upcoming'
-                ],
-                [
-                    'title' => 'Company Outing',
-                    'description' => 'Year-end company gathering',
-                    'start_date' => now()->addDays(14),
-                    'end_date' => now()->addDays(14)->addHours(4),
-                    'location' => 'Beach Resort',
-                    'status' => 'upcoming'
-                ]
-            ];
-            
-            $events = collect($sampleEvents);
-        }
+        // No sample event creation - use only real events from database
 
         return view('employee.dashboard', compact(
             'user',
@@ -426,7 +390,7 @@ class DashboardController extends Controller
         $fileName = "Attendance_History_{$user->name}_" . now()->format('Y-m-d_H-i-s') . '.pdf';
 
         // Generate the HTML from the view
-        $html = view('exports.attendance-history-export', [
+        $html = view('exports.dtr-export', [
             'user' => $user,
             'attendanceRecords' => $attendanceRecords,
             'daysData' => $daysData,
@@ -532,12 +496,13 @@ class DashboardController extends Controller
         }
 
         // Return the view for printing
-        return view('exports.attendance-history-export', [
+        return view('exports.dtr-export', [
             'user' => $user,
             'attendanceRecords' => $attendanceRecords,
             'daysData' => $daysData,
             'month' => $currentMonth,
             'year' => $currentYear,
+            'redirect_route' => route('employee.attendance-history'),
         ]);
     }
 
@@ -552,7 +517,7 @@ class DashboardController extends Controller
         
         $departments = Department::where('is_active', true)->get();
 
-        return view('employee.profile.edit', compact('user', 'departments'));
+        return view('profile.edit', compact('user', 'departments'));
     }
 
     /**

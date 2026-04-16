@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Create Announcement')
 @section('header', 'Create Announcement')
 @section('subheader', 'Add a new system announcement')
 

@@ -33,82 +33,7 @@ class ReportController extends Controller
         return view('hr.reports.index', compact('employees', 'departments'));
     }
 
-    /**
-     * Generate daily attendance report
-     */
-    public function daily(Request $request)
-    {
-        $request->validate([
-            'date' => 'required|date',
-            'department_id' => 'nullable|exists:departments,id',
-        ]);
 
-        $date = Carbon::parse($request->date);
-        $departmentId = $request->department_id;
-
-        $query = Attendance::where('attendance_date', $date->toDateString())
-            ->with('user.department');
-
-        if ($departmentId) {
-            $query->whereHas('user', function ($q) use ($departmentId) {
-                $q->where('department_id', $departmentId);
-            });
-        }
-
-        $records = $query->orderBy('attendance_date', 'asc')
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        $department = $departmentId ? Department::find($departmentId) : null;
-
-        return view('hr.reports.daily', compact('records', 'date', 'department'));
-    }
-
-    /**
-     * Generate weekly attendance report
-     */
-    public function weekly(Request $request)
-    {
-        $request->validate([
-            'start_date' => 'required|date',
-            'department_id' => 'nullable|exists:departments,id',
-        ]);
-
-        $startDate = Carbon::parse($request->start_date)->startOfWeek();
-        $endDate = $startDate->clone()->endOfWeek();
-        $departmentId = $request->department_id;
-
-        $query = Attendance::whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->with('user.department')
-            ->orderBy('attendance_date', 'asc');
-
-        if ($departmentId) {
-            $query->whereHas('user', function ($q) use ($departmentId) {
-                $q->where('department_id', $departmentId);
-            });
-        }
-
-        $records = $query->get();
-        $department = $departmentId ? Department::find($departmentId) : null;
-
-        // Pivot data for summary by employee
-        $summary = $records->groupBy('user.id')->map(function ($userRecords) {
-            return [
-                'user' => $userRecords->first()->user,
-                'present' => $userRecords->where('status', 'present')->count(),
-                'absent' => $userRecords->where('status', 'absent')->count(),
-                'late' => $userRecords->where('status', 'late')->count(),
-                'half_day' => $userRecords->where('status', 'half_day')->count(),
-                'leave' => $userRecords->where('status', 'leave')->count(),
-                'total_hours' => $userRecords->sum(function ($record) {
-                    return $this->calculateHours($record);
-                }),
-                'records' => $userRecords,
-            ];
-        });
-
-        return view('hr.reports.weekly', compact('records', 'summary', 'startDate', 'endDate', 'department'));
-    }
 
     /**
      * Generate monthly attendance report
@@ -194,61 +119,7 @@ class ReportController extends Controller
         return view('hr.reports.per-employee', compact('employee', 'records', 'summary', 'startDate', 'endDate'));
     }
 
-    /**
-     * Generate per-department/unit attendance report
-     */
-    public function perDepartment(Request $request)
-    {
-        $request->validate([
-            'department_id' => 'required|exists:departments,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
 
-        $department = Department::findOrFail($request->department_id);
-        $startDate = Carbon::parse($request->start_date);
-        $endDate = Carbon::parse($request->end_date);
-
-        $records = Attendance::whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->whereHas('user', function ($q) use ($department) {
-                $q->where('department_id', $department->id);
-            })
-            ->with('user.department')
-            ->orderBy('attendance_date', 'asc')
-            ->get();
-
-        // Summary by employee
-        $employeeSummary = $records->groupBy('user.id')->map(function ($userRecords) {
-            return [
-                'user' => $userRecords->first()->user,
-                'present' => $userRecords->where('status', 'present')->count(),
-                'absent' => $userRecords->where('status', 'absent')->count(),
-                'late' => $userRecords->where('status', 'late')->count(),
-                'half_day' => $userRecords->where('status', 'half_day')->count(),
-                'leave' => $userRecords->where('status', 'leave')->count(),
-                'attendance_rate' => $this->calculateAttendanceRate($userRecords),
-            ];
-        })->sortBy('user.name');
-
-        // Department-wide summary
-        $departmentSummary = [
-            'total_present' => $records->where('status', 'present')->count(),
-            'total_absent' => $records->where('status', 'absent')->count(),
-            'total_late' => $records->where('status', 'late')->count(),
-            'total_half_day' => $records->where('status', 'half_day')->count(),
-            'total_leave' => $records->where('status', 'leave')->count(),
-            'average_attendance_rate' => $this->calculateAverageDepartmentRate($employeeSummary),
-        ];
-
-        return view('hr.reports.per-department', compact(
-            'department',
-            'records',
-            'employeeSummary',
-            'departmentSummary',
-            'startDate',
-            'endDate'
-        ));
-    }
 
     /**
      * Export report to CSV
@@ -256,7 +127,7 @@ class ReportController extends Controller
     public function exportCsv(Request $request)
     {
         $request->validate([
-            'type' => 'required|in:daily,weekly,monthly,per-employee,per-department',
+            'type' => 'required|in:monthly,per-employee',
         ]);
 
         $type = $request->type;
@@ -286,7 +157,7 @@ class ReportController extends Controller
     public function exportPdf(Request $request)
     {
         $request->validate([
-            'type' => 'required|in:daily,weekly,monthly,per-employee,per-department',
+            'type' => 'required|in:monthly,per-employee',
         ]);
 
         $type = $request->type;
@@ -302,9 +173,77 @@ class ReportController extends Controller
         // Get appropriate view and data
         $data = $this->getReportData($request, $type);
         
-        // For now, we'll output as a formatted HTML that can be printed as PDF
-        // In production, consider using a library like dompdf
-        return view('hr.reports.pdf-export', compact('data', 'type'), ['fileName' => $fileName]);
+        // Export as DTR format
+        if ($type === 'per-employee') {
+            // Export single employee's DTR
+            $employee = User::findOrFail($request->employee_id);
+            $month = Carbon::createFromFormat('Y-m', $request->month);
+            $startDate = $month->clone()->startOfMonth();
+            $endDate = $month->clone()->endOfMonth();
+
+            // Get month and year from parsed date
+            $monthNum = $month->month;
+            $year = $month->year;
+
+            $attendanceRecords = Attendance::where('user_id', $employee->id)
+                ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->orderBy('attendance_date', 'asc')
+                ->get();
+
+            // Process attendance records into DTR format
+            $daysData = $this->processDaysDataForDtr($attendanceRecords);
+
+            return view('exports.dtr-export', [
+                'user' => $employee,
+                'attendanceRecords' => $attendanceRecords,
+                'daysData' => $daysData,
+                'month' => $monthNum,
+                'year' => $year,
+                'redirect_route' => route('hr.reports.index'),
+            ], ['fileName' => $fileName]);
+
+        } elseif ($type === 'monthly') {
+            // Export monthly as multiple DTR forms (one per employee)
+            $month = Carbon::createFromFormat('Y-m', $request->month);
+            $startDate = $month->clone()->startOfMonth();
+            $endDate = $month->clone()->endOfMonth();
+            $departmentId = $request->department_id;
+
+            $query = User::whereIn('role', ['employee', 'hr']);
+            if ($departmentId) {
+                $query->where('department_id', $departmentId);
+            }
+            $employees = $query->orderBy('name')->get();
+
+            // Build data for all employees in DTR format
+            $dtrExports = [];
+            foreach ($employees as $employee) {
+                $attendanceRecords = Attendance::where('user_id', $employee->id)
+                    ->whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
+                    ->orderBy('attendance_date', 'asc')
+                    ->get();
+
+                $daysData = $this->processDaysDataForDtr($attendanceRecords);
+
+                $dtrExports[] = [
+                    'user' => $employee,
+                    'attendanceRecords' => $attendanceRecords,
+                    'daysData' => $daysData,
+                    'month' => $month->month,
+                    'year' => $month->year,
+                ];
+            }
+
+            // Pass as collection to monthly DTR view for rendering multiple forms
+            return view('exports.monthly-dtr-export', [
+                'dtrExports' => $dtrExports,
+                'month' => $month,
+                'redirect_route' => route('hr.reports.index'),
+            ], ['fileName' => $fileName]);
+        }
+        
+        // Fallback
+        return redirect()->route('hr.reports.index')->with('error', 'Invalid report type');
     }
 
     /**
@@ -313,40 +252,12 @@ class ReportController extends Controller
     private function getReportData(Request $request, $type)
     {
         return match($type) {
-            'daily' => $this->getDailyData($request),
-            'weekly' => $this->getWeeklyData($request),
             'monthly' => $this->getMonthlyData($request),
             'per-employee' => $this->getPerEmployeeData($request),
-            'per-department' => $this->getPerDepartmentData($request),
         };
     }
 
-    private function getDailyData(Request $request)
-    {
-        $date = Carbon::parse($request->date);
-        $query = Attendance::where('attendance_date', $date->toDateString())->with('user.department');
-        
-        if ($request->department_id) {
-            $query->whereHas('user', fn($q) => $q->where('department_id', $request->department_id));
-        }
-        
-        return $query->orderBy('created_at')->get();
-    }
 
-    private function getWeeklyData(Request $request)
-    {
-        $startDate = Carbon::parse($request->start_date)->startOfWeek();
-        $endDate = $startDate->clone()->endOfWeek();
-        
-        $query = Attendance::whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->with('user.department');
-        
-        if ($request->department_id) {
-            $query->whereHas('user', fn($q) => $q->where('department_id', $request->department_id));
-        }
-        
-        return $query->orderBy('attendance_date')->get();
-    }
 
     private function getMonthlyData(Request $request)
     {
@@ -376,17 +287,7 @@ class ReportController extends Controller
             ->get();
     }
 
-    private function getPerDepartmentData(Request $request)
-    {
-        $startDate = Carbon::parse($request->start_date);
-        $endDate = Carbon::parse($request->end_date);
-        
-        return Attendance::whereBetween('attendance_date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->whereHas('user', fn($q) => $q->where('department_id', $request->department_id))
-            ->with('user.department')
-            ->orderBy('attendance_date')
-            ->get();
-    }
+
 
     /**
      * Output CSV stream
@@ -464,6 +365,51 @@ class ReportController extends Controller
     /**
      * Helper: Calculate attendance rate
      */
+    /**
+     * Process attendance records into DTR day format
+     */
+    private function processDaysDataForDtr($attendanceRecords)
+    {
+        $daysData = [];
+        $recordsByDay = $attendanceRecords->groupBy(function($record) {
+            return Carbon::parse($record->attendance_date)->day;
+        });
+
+        for ($day = 1; $day <= 31; $day++) {
+            $dayRecords = $recordsByDay->get($day);
+            $daysData[$day] = [];
+
+            if ($dayRecords && $dayRecords->count() > 0) {
+                $firstRecord = $dayRecords->first();
+                $lastRecord = $dayRecords->last();
+
+                $daysData[$day]['am_arrival'] = $firstRecord->time_in ? Carbon::parse($firstRecord->time_in)->format('H:i') : '08:00';
+                $daysData[$day]['am_depart'] = '12:00';
+                $daysData[$day]['pm_arrival'] = '13:00';
+                $daysData[$day]['pm_depart'] = $lastRecord->time_out ? Carbon::parse($lastRecord->time_out)->format('H:i') : '17:00';
+
+                if ($firstRecord->time_in && $lastRecord->time_out) {
+                    $timeIn = Carbon::parse($firstRecord->time_in);
+                    $timeOut = Carbon::parse($lastRecord->time_out);
+                    $expected_minutes = 480; // 8 hours
+                    $actual_minutes = $timeIn->diffInMinutes($timeOut);
+                    $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch
+
+                    if ($actual_work_minutes < $expected_minutes) {
+                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
+                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
+                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
+                    } else {
+                        $daysData[$day]['undertime_hours'] = 0;
+                        $daysData[$day]['undertime_minutes'] = 0;
+                    }
+                }
+            }
+        }
+
+        return $daysData;
+    }
+
     private function calculateAttendanceRate($records)
     {
         if ($records->isEmpty()) {
@@ -601,7 +547,7 @@ class ReportController extends Controller
         ]);
 
         // Generate the HTML from the view
-        $html = view('exports.attendance-history-export', [
+        $html = view('exports.dtr-export', [
             'user' => $user,
             'attendanceRecords' => $attendanceRecords,
             'daysData' => $daysData,
@@ -719,7 +665,7 @@ class ReportController extends Controller
         ]);
 
         // Return the view for printing
-        return view('exports.attendance-history-export', [
+        return view('exports.dtr-export', [
             'user' => $user,
             'attendanceRecords' => $attendanceRecords,
             'daysData' => $daysData,
@@ -728,5 +674,25 @@ class ReportController extends Controller
         ]);
     }
 
+    /**
+     * Show the HR user's attendance history with HR layout
+     */
+    public function attendanceHistory()
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->role, ['hr', 'super_admin'])) {
+            return redirect('/')->with('error', 'Unauthorized access');
+        }
+
+        // Get all attendance records for the authenticated HR user
+        $attendanceRecords = Attendance::on('supabase')
+            ->where('user_id', $user->id)
+            ->orderBy('attendance_date', 'desc')
+            ->paginate(20);
+
+        return view('employee.attendance-history-table', compact('user', 'attendanceRecords'));
+    }
 
 }

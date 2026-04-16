@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Edit User Role')
 @section('header', 'Edit User Role')
 @section('subheader', 'Assign or change user role')
 

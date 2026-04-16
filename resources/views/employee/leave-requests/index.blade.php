@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Leave Requests')
 @section('header', 'Leave Requests')
 @section('subheader', 'Manage your leave requests')
 
@@ -13,17 +14,6 @@
             <span>{{ session('success') }}</span>
         </div>
     @endif
-
-    <!-- Main Content -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h3 class="text-lg font-bold text-gray-800">My Leave Requests</h3>
-            <p class="text-sm text-gray-600 mt-1">View and manage all your leave requests</p>
-        </div>
-        <a href="{{ route('employee.leave-requests.create') }}" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition flex items-center gap-2">
-            <i class="fas fa-plus"></i> New Request
-        </a>
-    </div>
 
     <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
             <table class="w-full text-sm">
@@ -76,7 +66,6 @@
                                         </a>
                                         <form action="{{ route('employee.leave-requests.cancel', $request->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?');">
                                             @csrf
-                                            @method('DELETE')
                                             <button type="submit" class="px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 transition text-xs font-semibold">
                                                 Cancel
                                             </button>
@@ -99,6 +88,11 @@
                 </tbody>
             </table>
         </div>
+
+    <div class="flex justify-end mt-6">
+        <a href="{{ route('employee.leave-requests.create') }}" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition flex items-center gap-2">
+            <i class="fas fa-plus"></i> New Request
+        </a>
     </div>
 
 @endsection

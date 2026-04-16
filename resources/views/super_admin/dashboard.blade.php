@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Super Admin Dashboard')
 @section('header', 'Super Admin Dashboard')
 @section('subheader', 'System Overview & Monitoring')
 

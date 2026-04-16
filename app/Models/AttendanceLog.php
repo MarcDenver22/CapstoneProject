@@ -10,6 +10,7 @@ class AttendanceLog extends Model
 {
     use HasFactory;
 
+    protected $connection = 'supabase';
     protected $table = 'attendance_logs';
 
     protected $fillable = [

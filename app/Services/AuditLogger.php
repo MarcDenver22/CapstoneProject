@@ -42,7 +42,7 @@ class AuditLogger
     /**
      * Log a resource deletion
      */
-    public static function logDelete(string $modelType, int $modelId, ?array $data = null): AuditLog
+    public static function logDelete(string $modelType, ?int $modelId = null, ?array $data = null): AuditLog
     {
         return self::log('delete', $modelType, $modelId, $data);
     }

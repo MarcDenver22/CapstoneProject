@@ -9,6 +9,8 @@ class Event extends Model
 {
     use HasFactory;
 
+    protected $connection = 'supabase';
+
     protected $fillable = [
         'title',
         'description',

@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Edit Employee')
 @section('header', 'Edit Employee')
 @section('subheader', $employee->name)
 

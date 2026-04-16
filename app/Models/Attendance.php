@@ -9,6 +9,7 @@ class Attendance extends Model
 {
     use HasFactory;
 
+    protected $connection = 'supabase';
     protected $table = 'attendance';
 
     protected $fillable = [
@@ -23,8 +24,6 @@ class Attendance extends Model
 
     protected $casts = [
         'attendance_date' => 'date',
-        'time_in' => 'datetime',
-        'time_out' => 'datetime',
         'liveness_verified' => 'boolean',
     ];
 
