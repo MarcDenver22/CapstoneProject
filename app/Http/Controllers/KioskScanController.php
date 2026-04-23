@@ -278,8 +278,40 @@ class KioskScanController extends Controller
             $now = Carbon::now();
             $hour = $now->hour;
 
-            // AM: before 12pm, PM: 12pm and after
-            $period = $hour < 12 ? 'AM' : 'PM';
+            // Determine punch type based on attendance state
+            $punchType = $this->determinePunchType($user->id, $now);
+
+            // Get today's attendance record for state-based period detection
+            $dtr = Attendance::firstOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'attendance_date' => $now->toDateString(),
+                ],
+                [
+                    'status' => 'present',
+                    'liveness_verified' => true,
+                ]
+            );
+
+            // Determine period based on attendance state (state-based detection)
+            // 1st IN → AM, 1st OUT → AM, 2nd IN → PM, 2nd OUT → PM
+            // EXCEPTION: If it's past 12 PM and both AM fields are null, they skipped AM → use PM
+            if ($hour >= 12 && !$dtr->am_arrival && !$dtr->am_departure) {
+                // Past 12 PM with no AM records = employee is absent in AM, coming for PM
+                $period = 'PM';
+            } elseif (!$dtr->am_arrival) {
+                // AM arrival not set = first punch = AM period
+                $period = 'AM';
+            } elseif (!$dtr->am_departure) {
+                // AM departure not set = second punch = AM period
+                $period = 'AM';
+            } elseif (!$dtr->pm_arrival) {
+                // PM arrival not set = third punch = PM period
+                $period = 'PM';
+            } else {
+                // PM period (either arriving or departing)
+                $period = 'PM';
+            }
 
             // Check if employee already punched in/out for this period
             $lastLog = AttendanceLog::where('employee_id', $user->id)
@@ -287,13 +319,6 @@ class KioskScanController extends Controller
                 ->where('period', $period)
                 ->orderBy('punched_at', 'desc')
                 ->first();
-
-            // Determine punch type
-            if ($lastLog) {
-                $punchType = $lastLog->punch_type === 'IN' ? 'OUT' : 'IN';
-            } else {
-                $punchType = 'IN';
-            }
 
             // Save attendance log
             $log = AttendanceLog::create([
@@ -308,18 +333,6 @@ class KioskScanController extends Controller
                 'notes' => 'Kiosk face scan - ' . strtoupper($punchType),
             ]);
 
-            // Update DTR (Daily Time Record)
-            $dtr = Attendance::firstOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'attendance_date' => $now->toDateString(),
-                ],
-                [
-                    'status' => 'present',
-                    'liveness_verified' => true,
-                ]
-            );
-
             // Update period-specific times
             if ($period === 'AM') {
                 if ($punchType === 'IN') {
@@ -328,7 +341,7 @@ class KioskScanController extends Controller
                         $dtr->am_arrival = $now;
                     }
                 } else {
-                    // Lunch departure (AM departure)
+                    // Lunch departure (AM departure) - even if it's 12:10 PM
                     $dtr->am_departure = $now;
                 }
             } else {
@@ -376,8 +389,8 @@ class KioskScanController extends Controller
                 'punch_type' => $punchType,
                 'confidence' => round($confidence, 4),
                 'distance' => round($minDistance, 4),
-                'time_in' => $dtr->time_in ? $dtr->time_in->format('h:i A') : null,
-                'time_out' => $dtr->time_out ? $dtr->time_out->format('h:i A') : null,
+                'time_in' => $dtr->time_in ? optional($dtr->time_in)->format('h:i A') : null,
+                'time_out' => $dtr->time_out ? optional($dtr->time_out)->format('h:i A') : null,
                 'attendance_date' => $dtr->attendance_date,
             ]);
 
@@ -521,5 +534,58 @@ class KioskScanController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Determine the punch type (IN or OUT) based on attendance state
+     * State-based: Checks which period fields are populated in today's record
+     */
+    private function determinePunchType(int $userId, Carbon $now): string
+    {
+        $today = $now->toDateString();
+        
+        // Get today's attendance record
+        $attendance = Attendance::where('user_id', $userId)
+            ->where('attendance_date', $today)
+            ->first();
+        
+        if (!$attendance) {
+            // No record today = first punch = IN
+            return 'IN';
+        }
+        
+        // Check state: which period fields are populated?
+        if (!$attendance->am_arrival) {
+            // AM arrival not set = first punch = IN
+            return 'IN';
+        } elseif (!$attendance->am_departure) {
+            // AM arrival exists but no departure = next punch = OUT
+            return 'OUT';
+        } elseif (!$attendance->pm_arrival) {
+            // AM complete, PM arrival not set = next punch = IN
+            return 'IN';
+        } elseif (!$attendance->pm_departure) {
+            // PM arrival exists but no departure = next punch = OUT
+            return 'OUT';
+        }
+        
+        // All periods filled = no more punches today
+        return 'OUT';
+    }
+
+    /**
+     * Determine the period (AM or PM) based on attendance state
+     * State-based: Looks at which fields are already populated
+     * 
+     * Logic:
+     * - If punch_type is IN: Determine which period to start
+     * - If punch_type is OUT: Determine which period to complete
+     */
+    private function determinePeriod(int $hour, int $minute, string $punchType): string
+    {
+        // For state-based detection, we need the Attendance record
+        // This is a helper, actual period determination happens in scan() method
+        // Default to AM for first punches, PM for later ones
+        return $hour < 12 ? 'AM' : 'PM';
     }
 }

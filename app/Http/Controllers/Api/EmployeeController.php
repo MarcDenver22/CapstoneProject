@@ -112,8 +112,23 @@ class EmployeeController extends Controller
     /**
      * Search employees
      */
-    public function search(Request $request, $query)
+    public function search($query)
     {
+        // Validate the search query parameter
+        if (strlen($query) > 100) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Search query cannot exceed 100 characters'
+            ], 422);
+        }
+        
+        if (strlen($query) < 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Search query must be at least 1 character'
+            ], 422);
+        }
+
         $employees = User::where('name', 'like', "%{$query}%")
             ->orWhere('email', 'like', "%{$query}%")
             ->paginate(15);

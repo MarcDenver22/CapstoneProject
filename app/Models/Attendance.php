@@ -20,10 +20,20 @@ class Attendance extends Model
         'status',
         'notes',
         'liveness_verified',
+        'am_arrival',
+        'am_departure',
+        'pm_arrival',
+        'pm_departure',
     ];
 
     protected $casts = [
         'attendance_date' => 'date',
+        'time_in' => 'datetime',
+        'time_out' => 'datetime',
+        'am_arrival' => 'datetime',
+        'am_departure' => 'datetime',
+        'pm_arrival' => 'datetime',
+        'pm_departure' => 'datetime',
         'liveness_verified' => 'boolean',
     ];
 

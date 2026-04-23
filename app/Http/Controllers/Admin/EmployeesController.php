@@ -5,15 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Department;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\SearchEmployeesRequest;
 use App\Services\AuditLogger;
+use Illuminate\Http\Request;
 
 class EmployeesController extends Controller
 {
     /**
      * Display a listing of all employees
      */
-    public function index(Request $request)
+    public function index(SearchEmployeesRequest $request)
     {
         $query = User::whereIn('role', ['employee', 'hr'])->with('department');
 

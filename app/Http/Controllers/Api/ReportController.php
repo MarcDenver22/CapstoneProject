@@ -5,15 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\GetReportRequest;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
     /**
      * Get daily attendance report
      */
-    public function daily(Request $request)
+    public function daily(GetReportRequest $request)
     {
         $date = $request->date ?? Carbon::today();
 
@@ -38,7 +39,7 @@ class ReportController extends Controller
     /**
      * Get weekly attendance report
      */
-    public function weekly(Request $request)
+    public function weekly(GetReportRequest $request)
     {
         $startDate = $request->start_date ?? Carbon::now()->startOfWeek();
         $endDate = $request->end_date ?? Carbon::now()->endOfWeek();
@@ -66,7 +67,7 @@ class ReportController extends Controller
     /**
      * Get monthly attendance report
      */
-    public function monthly(Request $request)
+    public function monthly(GetReportRequest $request)
     {
         $year = $request->year ?? Carbon::now()->year;
         $month = $request->month ?? Carbon::now()->month;

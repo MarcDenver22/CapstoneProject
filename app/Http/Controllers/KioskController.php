@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\KioskVerifyPinRequest;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 
@@ -33,11 +33,9 @@ class KioskController extends Controller
     /**
      * Verify the kiosk PIN and unlock the session.
      */
-    public function verifyPin(Request $request)
+    public function verifyPin(KioskVerifyPinRequest $request)
     {
-        $validated = $request->validate([
-            'pin' => 'required|string|min:1',
-        ]);
+        $validated = $request->validated();
 
         $pin = trim($validated['pin']);
         $correct_pin = env('KIOSK_PIN', null);

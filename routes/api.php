@@ -19,17 +19,22 @@ use App\Http\Controllers\Api\ReportController;
 */
 
 // Public routes (no authentication required)
-Route::prefix('v1')->group(function () {
-    // Authentication routes
+// Rate limit: 10 requests per minute for security-sensitive endpoints
+Route::prefix('v1')->middleware('throttle:auth-public')->group(function () {
+    // Authentication routes - strict rate limiting
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/register', [AuthController::class, 'register']);
-    
-    // Public kiosk endpoint for face recognition
+});
+
+// Public kiosk endpoint for face recognition
+// Rate limit: 30 requests per minute (higher due to kiosk multiple attempts)
+Route::prefix('v1')->middleware('throttle:kiosk')->group(function () {
     Route::post('/attendance/recognize', [AttendanceController::class, 'recognize']);
 });
 
 // Protected routes (require authentication)
-Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+// Rate limit: 100 requests per minute for authenticated users
+Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     
     // Authentication
     Route::post('/auth/logout', [AuthController::class, 'logout']);

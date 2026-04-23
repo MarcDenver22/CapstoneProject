@@ -128,7 +128,13 @@ function attachEventListeners() {
     employeeIdInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') findUserBtn.click();
     });
-    document.getElementById('backHomeButton')?.addEventListener('click', resetScanner);
+    document.getElementById('backHomeButton')?.addEventListener('click', () => {
+        resetScanner();
+        // Navigate back to home after reset
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 300);
+    });
 }
 
 /**

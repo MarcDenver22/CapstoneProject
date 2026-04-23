@@ -5,15 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\GetAttendanceRequest;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
     /**
      * Get all attendance records (with pagination)
      */
-    public function index(Request $request)
+    public function index(GetAttendanceRequest $request)
     {
         $query = Attendance::query();
 

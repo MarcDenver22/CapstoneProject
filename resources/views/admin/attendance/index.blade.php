@@ -55,38 +55,43 @@
                                 </td>
                                 <!-- A.M. Arrival -->
                                 <td class="py-3 px-4 text-center border-r border-gray-300">
-                                    @php
-                                        $timeIn = $record->time_in;
-                                        $amArrival = null;
-                                        if ($timeIn) {
-                                            $time = \Carbon\Carbon::createFromFormat('H:i:s', $timeIn) ?? \Carbon\Carbon::createFromFormat('H:i', $timeIn);
-                                            $amArrival = $time && $time->hour < 12 ? $time->format('H:i') : null;
-                                        }
-                                    @endphp
-                                    @if($amArrival)
-                                        <span class="text-gray-600 font-medium">{{ $amArrival }}</span>
+                                    @if($record->am_arrival)
+                                        <span class="text-gray-600 font-medium">
+                                            {{ (is_object($record->am_arrival) ? $record->am_arrival : \Carbon\Carbon::parse($record->am_arrival))->format('H:i') }}
+                                        </span>
                                     @else
                                         <span class="text-gray-400">—</span>
                                     @endif
                                 </td>
                                 <!-- A.M. Departure -->
                                 <td class="py-3 px-4 text-center border-r border-gray-300">
-                                    <span class="text-gray-400">—</span>
+                                    @if($record->am_departure)
+                                        <span class="text-gray-600 font-medium">
+                                            {{ (is_object($record->am_departure) ? $record->am_departure : \Carbon\Carbon::parse($record->am_departure))->format('H:i') }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400">—</span>
+                                    @endif
                                 </td>
                                 <!-- P.M. Arrival -->
                                 <td class="py-3 px-4 text-center border-r border-gray-300">
-                                    <span class="text-gray-400">—</span>
+                                    @if($record->pm_arrival)
+                                        <span class="text-gray-600 font-medium">
+                                            {{ (is_object($record->pm_arrival) ? $record->pm_arrival : \Carbon\Carbon::parse($record->pm_arrival))->format('H:i') }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400">—</span>
+                                    @endif
                                 </td>
                                 <!-- P.M. Departure -->
                                 <td class="py-3 px-4 text-center border-r border-gray-300">
-                                    @php
-                                        $timeOut = $record->time_out;
-                                        if ($timeOut) {
-                                            echo '<span class="text-gray-600 font-medium">' . substr($timeOut, 0, 5) . '</span>';
-                                        } else {
-                                            echo '<span class="text-gray-400">—</span>';
-                                        }
-                                    @endphp
+                                    @if($record->pm_departure)
+                                        <span class="text-gray-600 font-medium">
+                                            {{ (is_object($record->pm_departure) ? $record->pm_departure : \Carbon\Carbon::parse($record->pm_departure))->format('H:i') }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400">—</span>
+                                    @endif
                                 </td>
                                 <td class="py-3 px-4 border-r border-gray-300">
                                     <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $record->getStatusBadgeClass() }}">
