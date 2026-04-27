@@ -59,24 +59,15 @@ class ProfileController extends Controller
         
         // Add password validation if user is trying to change password
         if ($request->filled('password')) {
-            $rules['current_password'] = 'required|string';
+            $rules['current_password'] = ['required', 'current_password'];
             $rules['password'] = 'required|string|min:8|confirmed';
         }
         
         $validated = $request->validate($rules);
         
-        // Track if password changed
-        $passwordChanged = false;
+        // Track if password changed (current_password rule already validated it)
+        $passwordChanged = $request->filled('password');
         
-        // Verify current password if changing password
-        if ($request->filled('password')) {
-            if (!Hash::check($request->input('current_password'), $user->password)) {
-                return Redirect::back()
-                    ->withInput($request->except('password', 'password_confirmation', 'current_password'))
-                    ->withErrors(['current_password' => 'The password you entered is incorrect. Please verify and try again.']);
-            }
-            $passwordChanged = true;
-        }
         
         // Prepare update data (only include non-null values and changed fields)
         $updateData = [
@@ -92,9 +83,12 @@ class ProfileController extends Controller
             $updateData['department_id'] = $validated['department_id'];
         }
         
+
+        $emailChanged = $validated['email'] !== $user->email;
         // Update profile fields
         $user->update($updateData);
         
+
         // If password changed, update it separately and explicitly
         if ($passwordChanged && $request->filled('password')) {
             $newHashedPassword = Hash::make($validated['password']);
@@ -113,7 +107,7 @@ class ProfileController extends Controller
         }
         
         // Mark email as unverified if it changed
-        if ($user->isDirty('email')) {
+        if ($emailChanged) {
             $user->email_verified_at = null;
             $user->save();
         }
