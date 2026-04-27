@@ -31,7 +31,6 @@
                 <tr class="border-b border-gray-300 bg-gray-50">
                     <th class="text-left py-3 px-4 font-semibold text-gray-700">NAME</th>
                     <th class="text-left py-3 px-4 font-semibold text-gray-700">EMAIL</th>
-                    <th class="text-left py-3 px-4 font-semibold text-gray-700">POSITION</th>
                     <th class="text-left py-3 px-4 font-semibold text-gray-700">DEPARTMENT</th>
                     <th class="text-left py-3 px-4 font-semibold text-gray-700">FACULTY ID</th>
                     <th class="text-left py-3 px-4 font-semibold text-gray-700">STATUS</th>
@@ -50,7 +49,6 @@
                             </div>
                         </td>
                         <td class="py-3 px-4 text-gray-600">{{ $employee->email }}</td>
-                        <td class="py-3 px-4 text-gray-600">{{ $employee->position ?? 'N/A' }}</td>
                         <td class="py-3 px-4 text-gray-600">{{ $employee->department?->name ?? 'N/A' }}</td>
                         <td class="py-3 px-4 text-gray-600">{{ $employee->faculty_id ?? 'N/A' }}</td>
                         <td class="py-3 px-4">

@@ -199,7 +199,7 @@ Route::middleware('auth')->prefix('super-admin')->name('super_admin.')->group(fu
         Route::get('/create', [SuperAdminDashboardController::class, 'manageUsers'])->name('create');
         Route::post('/', [SuperAdminDashboardController::class, 'createUser'])->name('store');
         Route::get('/{user}/edit', [SuperAdminDashboardController::class, 'editUser'])->name('edit');
-        Route::patch('/{user}', [SuperAdminDashboardController::class, 'updateUser'])->name('update');
+        Route::match(['put', 'patch'], '/{user}', [SuperAdminDashboardController::class, 'updateUser'])->name('update');
         Route::delete('/{user}', [SuperAdminDashboardController::class, 'deleteUser'])->name('delete');
     });
     

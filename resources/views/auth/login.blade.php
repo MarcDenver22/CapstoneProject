@@ -346,7 +346,7 @@
                             required
                             autofocus
                             autocomplete="email"
-                            placeholder="you@psu.edu"
+                            placeholder="Enter your email"
                             class="form-input w-full pl-11 pr-4 py-3 text-sm rounded-xl focus:outline-none transition"
                         >
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 input-icon">
@@ -365,7 +365,7 @@
                             type="password"
                             required
                             autocomplete="current-password"
-                            placeholder="••••••••"
+                            placeholder="Enter your password"
                             class="form-input w-full pl-11 pr-4 py-3 text-sm rounded-xl focus:outline-none transition"
                         >
                         <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 input-icon">

@@ -23,12 +23,22 @@
         @endif
 
         @if (session('success') || session('status'))
-            <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200">
-                <p class="text-green-700 font-semibold">{{ session('success') ?? session('status') }}</p>
-            </div>
+            @if(session('success'))
+                <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 flex items-start gap-3">
+                    <i class="fas fa-check-circle text-green-600 text-xl mt-0.5"></i>
+                    <div>
+                        <p class="text-green-700 font-semibold">{{ session('success') }}</p>
+                        <p class="text-green-600 text-sm mt-1">You can use your new password the next time you log in.</p>
+                    </div>
+                </div>
+            @else
+                <div class="mb-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
+                    <p class="text-blue-700 font-semibold">✓ Profile updated successfully</p>
+                </div>
+            @endif
         @endif
 
-        <form method="POST" action="{{ auth()->user()->role === 'hr' ? route('hr.profile.update') : (auth()->user()->role === 'admin' ? route('admin.profile.update') : route('profile.update')) }}" class="space-y-6">
+        <form method="POST" action="{{ auth()->user()->role === 'hr' ? route('hr.profile.update') : (auth()->user()->role === 'admin' ? route('admin.profile.update') : route('profile.update')) }}" class="space-y-6" id="profileForm">
             @csrf
             @method('PATCH')
 
@@ -73,7 +83,7 @@
                     type="text" 
                     id="employee_id" 
                     name="employee_id" 
-                    value="{{ $user->employee_id ?? 'N/A' }}" 
+                    value="{{ $user->faculty_id ?? 'N/A' }}" 
                     placeholder="EMP001"
                     disabled
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
@@ -81,49 +91,105 @@
                 <p class="text-gray-500 text-xs mt-1">Your Employee ID is auto-generated and cannot be changed</p>
             </div>
 
-            <!-- Position and Department -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Department -->
+            @if(isset($departments))
+            <div>
+                <label for="department_id" class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                <select 
+                    id="department_id" 
+                    name="department_id"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                    <option value="">Select a department</option>
+                    @forelse($departments as $dept)
+                        <option value="{{ $dept->id }}" {{ old('department_id', $user->department_id) == $dept->id ? 'selected' : '' }}>
+                            {{ $dept->name }}
+                        </option>
+                    @empty
+                        <option value="" disabled>No departments available</option>
+                    @endforelse
+                </select>
+            </div>
+            @elseif($user->department)
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                <input 
+                    type="text" 
+                    value="{{ $user->department->name ?? 'N/A' }}" 
+                    disabled
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                >
+            </div>
+            @endif
+
+            <!-- Password Change Section -->
+            <div class="border-t border-gray-300 pt-6 mt-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Change Password</h3>
+
+                <!-- Current Password -->
                 <div>
-                    <label for="position" class="block text-sm font-semibold text-gray-700 mb-2">Position</label>
-                    <input 
-                        type="text" 
-                        id="position" 
-                        name="position" 
-                        value="{{ old('position', $user->position) }}" 
-                        placeholder="e.g., HR Officer, HR Manager"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
+                    <label for="current_password" class="block text-sm font-semibold text-gray-700 mb-2">Current Password <span class="text-gray-500 font-normal">(required to change)</span></label>
+                    <p class="text-xs text-gray-600 mb-2">🔒 This is the password you currently use to log in. It's required for security verification.</p>
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            id="current_password" 
+                            name="current_password" 
+                            placeholder="Enter your current login password"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('current_password') border-red-500 @enderror pr-12"
+                            autocomplete="off"
+                        >
+                        <button 
+                            type="button"
+                            onclick="togglePasswordVisibility('current_password')"
+                            class="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700 transition"
+                            title="Toggle password visibility"
+                        >
+                            <i class="fas fa-eye" id="toggle-current_password"></i>
+                        </button>
+                    </div>
+                    @error('current_password')
+                        <p class="text-red-600 text-sm mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                    @enderror
                 </div>
 
-                @if(isset($departments))
-                <div>
-                    <label for="department_id" class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
-                    <select 
-                        id="department_id" 
-                        name="department_id"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                        <option value="">Select a department</option>
-                        @forelse($departments as $dept)
-                            <option value="{{ $dept->id }}" {{ old('department_id', $user->department_id) == $dept->id ? 'selected' : '' }}>
-                                {{ $dept->name }}
-                            </option>
-                        @empty
-                            <option value="" disabled>No departments available</option>
-                        @endforelse
-                    </select>
-                </div>
-                @elseif($user->department)
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                <!-- New Password -->
+                <div class="mt-4">
+                    <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">New Password <span class="text-gray-500 font-normal">(min. 8 characters)</span></label>
+                    <p class="text-xs text-gray-600 mb-2">🆕 Create a strong, new password. Leave blank if you don't want to change it.</p>
                     <input 
-                        type="text" 
-                        value="{{ $user->department->name ?? 'N/A' }}" 
-                        disabled
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Enter new password"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('password') border-red-500 @enderror"
+                        autocomplete="off"
                     >
+                    <div class="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                        <i class="fas fa-shield-alt text-blue-500"></i>
+                        Password strength: <span id="passwordStrength">—</span>
+                    </div>
+                    @error('password')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
-                @endif
+
+                <!-- Confirm Password -->
+                <div class="mt-4">
+                    <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                    <p class="text-xs text-gray-600 mb-2">✓ Re-enter your new password to confirm it matches.</p>
+                    <input 
+                        type="password" 
+                        id="password_confirmation" 
+                        name="password_confirmation" 
+                        placeholder="Confirm new password"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        autocomplete="off"
+                    >
+                    <div id="passwordMatch" class="mt-2 text-xs hidden">
+                        <i class="fas fa-check text-green-500 mr-1"></i><span class="text-green-600">Passwords match ✓</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Account Info -->
@@ -154,5 +220,116 @@
         </form>
     </div>
 </div>
+
+<script>
+// Toggle password visibility
+function togglePasswordVisibility(fieldId) {
+    const field = document.getElementById(fieldId);
+    const toggleIcon = document.getElementById('toggle-' + fieldId);
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        field.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+
+// Calculate password strength
+function calculatePasswordStrength(password) {
+    let strength = 0;
+    
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[!@#$%^&*]/.test(password)) strength++;
+    
+    return strength;
+}
+
+// Update password strength indicator
+function updatePasswordStrength() {
+    const password = document.getElementById('password').value;
+    const strengthElement = document.getElementById('passwordStrength');
+    const strength = calculatePasswordStrength(password);
+    
+    if (password.length === 0) {
+        strengthElement.textContent = '—';
+        strengthElement.className = 'text-gray-500';
+    } else if (strength <= 1) {
+        strengthElement.innerHTML = '<span class="text-red-600">Weak</span>';
+        strengthElement.className = 'text-red-600';
+    } else if (strength <= 2) {
+        strengthElement.innerHTML = '<span class="text-yellow-600">Fair</span>';
+        strengthElement.className = 'text-yellow-600';
+    } else if (strength <= 3) {
+        strengthElement.innerHTML = '<span class="text-blue-600">Good</span>';
+        strengthElement.className = 'text-blue-600';
+    } else {
+        strengthElement.innerHTML = '<span class="text-green-600">Strong</span>';
+        strengthElement.className = 'text-green-600';
+    }
+}
+
+// Clear password fields when page loads if there are no errors
+document.addEventListener('DOMContentLoaded', function() {
+    const errorMessages = document.querySelectorAll('.text-red-600');
+    const hasErrors = errorMessages.length > 0;
+    
+    // Clear password fields if no errors (successful submission)
+    if (!hasErrors) {
+        document.getElementById('current_password').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('password_confirmation').value = '';
+    }
+    
+    // Add real-time validation for passwords
+    const passwordField = document.getElementById('password');
+    const confirmField = document.getElementById('password_confirmation');
+    const passwordMatchDiv = document.getElementById('passwordMatch');
+    const profileForm = document.getElementById('profileForm');
+    
+    // Password strength on input
+    passwordField.addEventListener('input', updatePasswordStrength);
+    
+    // Password confirmation validation
+    confirmField.addEventListener('input', function() {
+        if (passwordField.value && confirmField.value) {
+            if (passwordField.value === confirmField.value) {
+                confirmField.style.borderColor = '#10b981';
+                passwordMatchDiv.classList.remove('hidden');
+            } else {
+                confirmField.style.borderColor = '#ef4444';
+                passwordMatchDiv.classList.add('hidden');
+            }
+        } else {
+            confirmField.style.borderColor = '#d1d5db';
+            passwordMatchDiv.classList.add('hidden');
+        }
+    });
+    
+    // Form submission handler to debug
+    profileForm.addEventListener('submit', function(e) {
+        console.log('Form submitted');
+        console.log('Current Password:', document.getElementById('current_password').value ? 'filled' : 'empty');
+        console.log('New Password:', document.getElementById('password').value ? 'filled' : 'empty');
+        console.log('Confirm Password:', document.getElementById('password_confirmation').value ? 'filled' : 'empty');
+        
+        // Validate password match before submission
+        const pwd = document.getElementById('password').value;
+        const confirm = document.getElementById('password_confirmation').value;
+        
+        if (pwd !== '' && pwd !== confirm) {
+            e.preventDefault();
+            alert('❌ Passwords do not match! Please verify and try again.');
+            return false;
+        }
+    });
+});
+</script>
 
 @endsection

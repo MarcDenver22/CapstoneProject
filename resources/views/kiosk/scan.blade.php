@@ -315,8 +315,8 @@
 
             <!-- Registration Number Input -->
             <div id="loginForm" style="margin-bottom: 30px; padding: 20px; background: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 16px;">
-                <label style="display: block; color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Enter Your Employee ID</label>
-                <input type="text" id="employeeIdInput" placeholder="e.g., EMP001" style="width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 8px; color: white; font-size: 16px; margin-bottom: 12px;" autocomplete="off">
+                <label style="display: block; color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Enter Your 4-Digit Employee ID</label>
+                <input type="text" id="employeeIdInput" placeholder="e.g., 0001" style="width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 8px; color: white; font-size: 16px; margin-bottom: 12px; text-align: center;" autocomplete="off" maxlength="4">
                 <button id="findUserBtn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
                     Log In
                 </button>

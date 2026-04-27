@@ -30,7 +30,7 @@ class KioskScanController extends Controller
     }
 
     /**
-     * Find and set user by employee ID
+     * Find and set user by employee ID (faculty_id)
      * This allows the kiosk to identify which employee is scanning
      */
     public function findUser(Request $request): JsonResponse
@@ -40,7 +40,7 @@ class KioskScanController extends Controller
                 'employee_id' => 'required|string',
             ]);
 
-            $user = User::where('employee_id', $validated['employee_id'])->first();
+            $user = User::where('faculty_id', $validated['employee_id'])->first();
 
             if (!$user) {
                 return response()->json([
@@ -59,6 +59,7 @@ class KioskScanController extends Controller
             // Set the user in session for the scan process
             session(['kiosk_user' => $user]);
 
+            // Return user info with faculty_id
             return response()->json([
                 'status' => 'success',
                 'user_id' => $user->id,
@@ -112,9 +113,10 @@ class KioskScanController extends Controller
             // This improves accuracy across different lighting/angles
             $averageDescriptor = $this->averageDescriptors($descriptors);
 
+            // Return face descriptors with faculty_id
             return response()->json([
                 'status' => 'success',
-                'employee_id' => $user->employee_id,
+                'employee_id' => $user->faculty_id,
                 'name' => $user->name,
                 'descriptor' => $averageDescriptor,
                 'sample_count' => count($descriptors)

@@ -7,7 +7,10 @@ use App\Models\User;
 use App\Models\Department;
 use App\Http\Requests\Admin\SearchEmployeesRequest;
 use App\Services\AuditLogger;
+use App\Mail\EmployeeWelcome;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class EmployeesController extends Controller
 {
@@ -123,13 +126,13 @@ class EmployeesController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'position' => 'nullable|string|max:255',
-            'department_id' => 'nullable|exists:departments,id',
-            'faculty_id' => 'nullable|string|unique:users,faculty_id',
+            'faculty_id' => 'required|string|digits:4|unique:users,faculty_id',
+            'department_id' => 'required|exists:departments,id',
         ]);
 
-        $validated['password'] = bcrypt($validated['password']);
+        // Generate temporary password (faculty_id + random 4 digits)
+        $tempPassword = $validated['faculty_id'] . random_int(1000, 9999);
+        $validated['password'] = bcrypt($tempPassword);
         $validated['role'] = 'employee';
 
         $employee = User::create($validated);
@@ -138,11 +141,20 @@ class EmployeesController extends Controller
         AuditLogger::logCreate('Employee', $employee->id, [
             'name' => $employee->name,
             'email' => $employee->email,
-            'position' => $employee->position,
             'faculty_id' => $employee->faculty_id,
+            'department_id' => $employee->department_id,
         ]);
 
-        return redirect()->route('admin.employees.list')->with('success', 'Employee created successfully');
+        // Send welcome email with credentials
+        try {
+            $employee->load('department');
+            Mail::to($employee->email)->send(new EmployeeWelcome($employee, $tempPassword));
+        } catch (\Exception $e) {
+            // Log email error but continue with employee creation
+            Log::error('Failed to send employee welcome email: ' . $e->getMessage());
+        }
+
+        return redirect()->route('admin.employees.list')->with('success', "Employee created successfully! Welcome email sent to {$employee->email}");
     }
 
     /**

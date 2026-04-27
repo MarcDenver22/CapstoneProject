@@ -38,10 +38,6 @@
                     <h3 class="text-gray-500 text-sm uppercase font-semibold mb-4">Work Details</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                            <p class="text-gray-500 text-xs uppercase mb-1">Position</p>
-                            <p class="text-gray-800 font-semibold">{{ $employee->position ?? 'N/A' }}</p>
-                        </div>
-                        <div class="p-4 rounded-lg bg-gray-50 border border-gray-200">
                             <p class="text-gray-500 text-xs uppercase mb-1">Department</p>
                             <p class="text-gray-800 font-semibold">{{ $employee->department?->name ?? 'N/A' }}</p>
                         </div>

@@ -103,8 +103,8 @@
                         <p class="text-gray-800 font-semibold">{{ auth()->user()->email }}</p>
                     </div>
                     <div>
-                        <p class="text-gray-500 uppercase text-xs font-semibold">Position</p>
-                        <p class="text-gray-800 font-semibold">{{ auth()->user()->position ?? 'N/A' }}</p>
+                        <p class="text-gray-500 uppercase text-xs font-semibold">Employee ID</p>
+                        <p class="text-gray-800 font-semibold">{{ auth()->user()->faculty_id ?? 'N/A' }}</p>
                     </div>
                     <div>
                         <p class="text-gray-500 uppercase text-xs font-semibold">Department</p>

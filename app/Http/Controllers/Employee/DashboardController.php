@@ -36,7 +36,7 @@ class DashboardController extends Controller
             'name' => $user->name,
             'position' => $user->position ?? 'N/A',
             'department' => $departmentName,
-            'employee_id' => $user->employee_id ?? 'N/A',
+            'employee_id' => $user->faculty_id ?? 'N/A',
         ];
 
         // Monthly attendance stats (current month)

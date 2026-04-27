@@ -71,11 +71,18 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
 
-                <!-- Position -->
+                <!-- Department -->
                 <div>
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Position</label>
-                    <input type="text" name="position" value="{{ old('position') }}" required
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">Department</label>
+                    <select name="department_id" required
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select a department</option>
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
+                                {{ $dept->name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
