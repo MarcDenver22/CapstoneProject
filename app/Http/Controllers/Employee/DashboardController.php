@@ -95,7 +95,7 @@ class DashboardController extends Controller
 
         // Group records by day
         $recordsByDay = $allAttendanceRecords->groupBy(function($record) {
-            return \Carbon\Carbon::parse($record->attendance_date)->day;
+            return Carbon::parse($record->attendance_date)->day;
         });
 
         // Process each day (1-31)
@@ -109,28 +109,28 @@ class DashboardController extends Controller
 
                 // A.M. Arrival
                 $daysData[$day]['am_arrival'] = $record->am_arrival 
-                    ? \Carbon\Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i') 
+                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i') 
                     : '—';
 
                 // A.M. Departure
                 $daysData[$day]['am_depart'] = $record->am_departure 
-                    ? \Carbon\Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i') 
+                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i') 
                     : '—';
 
                 // P.M. Arrival
                 $daysData[$day]['pm_arrival'] = $record->pm_arrival 
-                    ? \Carbon\Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i') 
+                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i') 
                     : '—';
 
                 // P.M. Departure
                 $daysData[$day]['pm_depart'] = $record->pm_departure 
-                    ? \Carbon\Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i') 
+                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i') 
                     : '—';
 
                 // Calculate undertime based on actual punch times
                 if ($record->am_arrival && $record->pm_departure) {
-                    $timeIn = \Carbon\Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
-                    $timeOut = \Carbon\Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
+                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
+                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
                     $expected_minutes = 480; // 8 hours
                     $actual_minutes = $timeIn->diffInMinutes($timeOut);
                     $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
@@ -227,7 +227,7 @@ class DashboardController extends Controller
 
         // Group records by day
         $recordsByDay = $attendanceRecords->groupBy(function($record) {
-            return \Carbon\Carbon::parse($record->attendance_date)->day;
+            return Carbon::parse($record->attendance_date)->day;
         });
 
         // Process each day (1-31)
@@ -243,28 +243,28 @@ class DashboardController extends Controller
 
                 // A.M. Arrival
                 $daysData[$day]['am_arrival'] = $record->am_arrival 
-                    ? \Carbon\Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i') 
+                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i') 
                     : '—';
 
                 // A.M. Departure
                 $daysData[$day]['am_depart'] = $record->am_departure 
-                    ? \Carbon\Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i') 
+                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i') 
                     : '—';
 
                 // P.M. Arrival
                 $daysData[$day]['pm_arrival'] = $record->pm_arrival 
-                    ? \Carbon\Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i') 
+                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i') 
                     : '—';
 
                 // P.M. Departure
                 $daysData[$day]['pm_depart'] = $record->pm_departure 
-                    ? \Carbon\Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i') 
+                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i') 
                     : '—';
 
                 // Calculate undertime
                 if ($record->am_arrival && $record->pm_departure) {
-                    $timeIn = \Carbon\Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
-                    $timeOut = \Carbon\Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
+                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
+                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
                     $expected_minutes = 480; // 8 hours
                     $actual_minutes = $timeIn->diffInMinutes($timeOut);
                     $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
@@ -325,7 +325,7 @@ class DashboardController extends Controller
 
         // Group records by day
         $recordsByDay = $attendanceRecords->groupBy(function($record) {
-            return \Carbon\Carbon::parse($record->attendance_date)->day;
+            return Carbon::parse($record->attendance_date)->day;
         });
 
         // Process each day (1-31)
@@ -339,28 +339,28 @@ class DashboardController extends Controller
 
                 // A.M. Arrival
                 $daysData[$day]['am_arrival'] = $record->am_arrival
-                    ? \Carbon\Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
                     : '—';
 
                 // A.M. Departure
                 $daysData[$day]['am_depart'] = $record->am_departure
-                    ? \Carbon\Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
                     : '—';
 
                 // P.M. Arrival
                 $daysData[$day]['pm_arrival'] = $record->pm_arrival
-                    ? \Carbon\Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
                     : '—';
 
                 // P.M. Departure
                 $daysData[$day]['pm_depart'] = $record->pm_departure
-                    ? \Carbon\Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
                     : '—';
 
                 // Calculate undertime based on actual punch times
                 if ($record->am_arrival && $record->pm_departure) {
-                    $timeIn = \Carbon\Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
-                    $timeOut = \Carbon\Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
+                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
+                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
                     $expected_minutes = 480; // 8 hours
                     $actual_minutes = $timeIn->diffInMinutes($timeOut);
                     $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
@@ -433,7 +433,7 @@ class DashboardController extends Controller
 
         // Group records by day
         $recordsByDay = $attendanceRecords->groupBy(function($record) {
-            return \Carbon\Carbon::parse($record->attendance_date)->day;
+            return Carbon::parse($record->attendance_date)->day;
         });
 
         // Process each day (1-31)
@@ -447,28 +447,28 @@ class DashboardController extends Controller
 
                 // A.M. Arrival
                 $daysData[$day]['am_arrival'] = $record->am_arrival
-                    ? \Carbon\Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
                     : '—';
 
                 // A.M. Departure
                 $daysData[$day]['am_depart'] = $record->am_departure
-                    ? \Carbon\Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
                     : '—';
 
                 // P.M. Arrival
                 $daysData[$day]['pm_arrival'] = $record->pm_arrival
-                    ? \Carbon\Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
                     : '—';
 
                 // P.M. Departure
                 $daysData[$day]['pm_depart'] = $record->pm_departure
-                    ? \Carbon\Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
                     : '—';
 
                 // Calculate undertime based on actual punch times
                 if ($record->am_arrival && $record->pm_departure) {
-                    $timeIn = \Carbon\Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
-                    $timeOut = \Carbon\Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
+                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
+                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
                     $expected_minutes = 480; // 8 hours
                     $actual_minutes = $timeIn->diffInMinutes($timeOut);
                     $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
