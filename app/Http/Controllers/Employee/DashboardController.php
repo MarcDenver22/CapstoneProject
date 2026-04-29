@@ -10,6 +10,7 @@ use App\Models\LeaveRequest;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -82,10 +83,6 @@ class DashboardController extends Controller
             ->get();
 
         // Process attendance records into structured daily data for DTR display
-        $daysData = [];
-        $totalHours = 0;
-        $totalMinutes = 0;
-
         $allAttendanceRecords = Attendance::on('supabase')
             ->where('user_id', $user->id)
             ->whereYear('attendance_date', $currentYear)
@@ -93,73 +90,7 @@ class DashboardController extends Controller
             ->orderBy('attendance_date', 'asc')
             ->get();
 
-        // Group records by day
-        $recordsByDay = $allAttendanceRecords->groupBy(function($record) {
-            return Carbon::parse($record->attendance_date)->day;
-        });
-
-        // Process each day (1-31)
-        for ($day = 1; $day <= 31; $day++) {
-            $dayRecords = $recordsByDay->get($day);
-            $daysData[$day] = [];
-
-            if ($dayRecords && $dayRecords->count() > 0) {
-                // Get first record for the day
-                $record = $dayRecords->first();
-
-                // A.M. Arrival
-                $daysData[$day]['am_arrival'] = $record->am_arrival 
-                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i') 
-                    : '—';
-
-                // A.M. Departure
-                $daysData[$day]['am_depart'] = $record->am_departure 
-                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i') 
-                    : '—';
-
-                // P.M. Arrival
-                $daysData[$day]['pm_arrival'] = $record->pm_arrival 
-                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i') 
-                    : '—';
-
-                // P.M. Departure
-                $daysData[$day]['pm_depart'] = $record->pm_departure 
-                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i') 
-                    : '—';
-
-                // Calculate undertime based on actual punch times
-                if ($record->am_arrival && $record->pm_departure) {
-                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
-                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
-                    $expected_minutes = 480; // 8 hours
-                    $actual_minutes = $timeIn->diffInMinutes($timeOut);
-                    $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
-
-                    if ($actual_work_minutes < $expected_minutes) {
-                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
-                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
-                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
-                        $totalHours += $daysData[$day]['undertime_hours'];
-                        $totalMinutes += $daysData[$day]['undertime_minutes'];
-                        // Handle minute overflow
-                        if ($totalMinutes >= 60) {
-                            $totalHours += intdiv($totalMinutes, 60);
-                            $totalMinutes = $totalMinutes % 60;
-                        }
-                    } else {
-                        $daysData[$day]['undertime_hours'] = 0;
-                        $daysData[$day]['undertime_minutes'] = 0;
-                    }
-                } else {
-                    // If no complete punch times recorded, set undertime to 0
-                    $daysData[$day]['undertime_hours'] = 0;
-                    $daysData[$day]['undertime_minutes'] = 0;
-                }
-            }
-        }
-
-        // If no real data, all daysData entries will remain empty
-        // No sample data generation needed
+        ['daysData' => $daysData, 'totalHours' => $totalHours, 'totalMinutes' => $totalMinutes] = $this->buildDaysData($allAttendanceRecords);
 
         // Fetch active announcements and events for employee dashboard
         $announcements = Announcement::on('supabase')
@@ -221,75 +152,7 @@ class DashboardController extends Controller
             ->get();
 
         // Process attendance records into structured daily data (same as PDF export)
-        $daysData = [];
-        $totalHours = 0;
-        $totalMinutes = 0;
-
-        // Group records by day
-        $recordsByDay = $attendanceRecords->groupBy(function($record) {
-            return Carbon::parse($record->attendance_date)->day;
-        });
-
-        // Process each day (1-31)
-        for ($day = 1; $day <= 31; $day++) {
-            $dayRecords = $recordsByDay->get($day);
-            $daysData[$day] = [];
-
-            if ($dayRecords && $dayRecords->count() > 0) {
-                // Get first record for the day
-                $record = $dayRecords->first();
-                $firstRecord = $dayRecords->first();
-                $lastRecord = $dayRecords->last();
-
-                // A.M. Arrival
-                $daysData[$day]['am_arrival'] = $record->am_arrival 
-                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i') 
-                    : '—';
-
-                // A.M. Departure
-                $daysData[$day]['am_depart'] = $record->am_departure 
-                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i') 
-                    : '—';
-
-                // P.M. Arrival
-                $daysData[$day]['pm_arrival'] = $record->pm_arrival 
-                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i') 
-                    : '—';
-
-                // P.M. Departure
-                $daysData[$day]['pm_depart'] = $record->pm_departure 
-                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i') 
-                    : '—';
-
-                // Calculate undertime
-                if ($record->am_arrival && $record->pm_departure) {
-                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
-                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
-                    $expected_minutes = 480; // 8 hours
-                    $actual_minutes = $timeIn->diffInMinutes($timeOut);
-                    $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
-
-                    if ($actual_work_minutes < $expected_minutes) {
-                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
-                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
-                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
-                        $totalHours += $daysData[$day]['undertime_hours'];
-                        $totalMinutes += $daysData[$day]['undertime_minutes'];
-                        // Handle minute overflow
-                        if ($totalMinutes >= 60) {
-                            $totalHours += intdiv($totalMinutes, 60);
-                            $totalMinutes = $totalMinutes % 60;
-                        }
-                    } else {
-                        $daysData[$day]['undertime_hours'] = 0;
-                        $daysData[$day]['undertime_minutes'] = 0;
-                    }
-                } else {
-                    $daysData[$day]['undertime_hours'] = 0;
-                    $daysData[$day]['undertime_minutes'] = 0;
-                }
-            }
-        }
+        ['daysData' => $daysData, 'totalHours' => $totalHours, 'totalMinutes' => $totalMinutes] = $this->buildDaysData($attendanceRecords);
 
         return view('employee.attendance-history-table', compact(
             'user',
@@ -319,73 +182,7 @@ class DashboardController extends Controller
             ->get();
 
         // Process attendance records into structured daily data
-        $daysData = [];
-        $totalHours = 0;
-        $totalMinutes = 0;
-
-        // Group records by day
-        $recordsByDay = $attendanceRecords->groupBy(function($record) {
-            return Carbon::parse($record->attendance_date)->day;
-        });
-
-        // Process each day (1-31)
-        for ($day = 1; $day <= 31; $day++) {
-            $dayRecords = $recordsByDay->get($day);
-            $daysData[$day] = [];
-
-            if ($dayRecords && $dayRecords->count() > 0) {
-                // Get the first record for the day
-                $record = $dayRecords->first();
-
-                // A.M. Arrival
-                $daysData[$day]['am_arrival'] = $record->am_arrival
-                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
-                    : '—';
-
-                // A.M. Departure
-                $daysData[$day]['am_depart'] = $record->am_departure
-                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
-                    : '—';
-
-                // P.M. Arrival
-                $daysData[$day]['pm_arrival'] = $record->pm_arrival
-                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
-                    : '—';
-
-                // P.M. Departure
-                $daysData[$day]['pm_depart'] = $record->pm_departure
-                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
-                    : '—';
-
-                // Calculate undertime based on actual punch times
-                if ($record->am_arrival && $record->pm_departure) {
-                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
-                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
-                    $expected_minutes = 480; // 8 hours
-                    $actual_minutes = $timeIn->diffInMinutes($timeOut);
-                    $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
-
-                    if ($actual_work_minutes < $expected_minutes) {
-                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
-                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
-                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
-                        $totalHours += $daysData[$day]['undertime_hours'];
-                        $totalMinutes += $daysData[$day]['undertime_minutes'];
-                        // Handle minute overflow
-                        if ($totalMinutes >= 60) {
-                            $totalHours += intdiv($totalMinutes, 60);
-                            $totalMinutes = $totalMinutes % 60;
-                        }
-                    } else {
-                        $daysData[$day]['undertime_hours'] = 0;
-                        $daysData[$day]['undertime_minutes'] = 0;
-                    }
-                } else {
-                    $daysData[$day]['undertime_hours'] = 0;
-                    $daysData[$day]['undertime_minutes'] = 0;
-                }
-            }
-        }
+        ['daysData' => $daysData, 'totalHours' => $totalHours, 'totalMinutes' => $totalMinutes] = $this->buildDaysData($attendanceRecords);
 
         $fileName = "Attendance_History_{$user->name}_" . now()->format('Y-m-d_H-i-s') . '.pdf';
 
@@ -427,73 +224,7 @@ class DashboardController extends Controller
             ->get();
 
         // Process attendance records into structured daily data
-        $daysData = [];
-        $totalHours = 0;
-        $totalMinutes = 0;
-
-        // Group records by day
-        $recordsByDay = $attendanceRecords->groupBy(function($record) {
-            return Carbon::parse($record->attendance_date)->day;
-        });
-
-        // Process each day (1-31)
-        for ($day = 1; $day <= 31; $day++) {
-            $dayRecords = $recordsByDay->get($day);
-            $daysData[$day] = [];
-
-            if ($dayRecords && $dayRecords->count() > 0) {
-                // Get the first record for the day
-                $record = $dayRecords->first();
-
-                // A.M. Arrival
-                $daysData[$day]['am_arrival'] = $record->am_arrival
-                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
-                    : '—';
-
-                // A.M. Departure
-                $daysData[$day]['am_depart'] = $record->am_departure
-                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
-                    : '—';
-
-                // P.M. Arrival
-                $daysData[$day]['pm_arrival'] = $record->pm_arrival
-                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
-                    : '—';
-
-                // P.M. Departure
-                $daysData[$day]['pm_depart'] = $record->pm_departure
-                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
-                    : '—';
-
-                // Calculate undertime based on actual punch times
-                if ($record->am_arrival && $record->pm_departure) {
-                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
-                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
-                    $expected_minutes = 480; // 8 hours
-                    $actual_minutes = $timeIn->diffInMinutes($timeOut);
-                    $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
-
-                    if ($actual_work_minutes < $expected_minutes) {
-                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
-                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
-                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
-                        $totalHours += $daysData[$day]['undertime_hours'];
-                        $totalMinutes += $daysData[$day]['undertime_minutes'];
-                        // Handle minute overflow
-                        if ($totalMinutes >= 60) {
-                            $totalHours += intdiv($totalMinutes, 60);
-                            $totalMinutes = $totalMinutes % 60;
-                        }
-                    } else {
-                        $daysData[$day]['undertime_hours'] = 0;
-                        $daysData[$day]['undertime_minutes'] = 0;
-                    }
-                } else {
-                    $daysData[$day]['undertime_hours'] = 0;
-                    $daysData[$day]['undertime_minutes'] = 0;
-                }
-            }
-        }
+        ['daysData' => $daysData, 'totalHours' => $totalHours, 'totalMinutes' => $totalMinutes] = $this->buildDaysData($attendanceRecords);
 
         // Return the view for printing
         return view('exports.dtr-export', [
@@ -540,5 +271,74 @@ class DashboardController extends Controller
         $user->update($validated);
 
         return redirect()->route('employee.dashboard')->with('success', 'Profile updated successfully!');
+    }
+
+    /**
+     * Process attendance records into structured DTR day data.
+     *
+     * @param  Collection  $records
+     * @return array{daysData: array<int, array<string, mixed>>, totalHours: int, totalMinutes: int}
+     */
+    private function buildDaysData(Collection $records): array
+    {
+        $daysData = [];
+        $totalHours = 0;
+        $totalMinutes = 0;
+
+        $recordsByDay = $records->groupBy(function ($record) {
+            return Carbon::parse($record->attendance_date)->day;
+        });
+
+        for ($day = 1; $day <= 31; $day++) {
+            $dayRecords = $recordsByDay->get($day);
+            $daysData[$day] = [];
+
+            if ($dayRecords && $dayRecords->count() > 0) {
+                $record = $dayRecords->first();
+
+                $daysData[$day]['am_arrival'] = $record->am_arrival
+                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
+
+                $daysData[$day]['am_depart'] = $record->am_departure
+                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
+
+                $daysData[$day]['pm_arrival'] = $record->pm_arrival
+                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
+
+                $daysData[$day]['pm_depart'] = $record->pm_departure
+                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
+
+                if ($record->am_arrival && $record->pm_departure) {
+                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
+                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
+                    $expected_minutes = 480; // 8 hours
+                    $actual_work_minutes = $timeIn->diffInMinutes($timeOut) - 60; // Subtract 1 hour lunch break
+
+                    if ($actual_work_minutes < $expected_minutes) {
+                        $undertime_minutes = $expected_minutes - $actual_work_minutes;
+                        $daysData[$day]['undertime_hours'] = intdiv($undertime_minutes, 60);
+                        $daysData[$day]['undertime_minutes'] = $undertime_minutes % 60;
+                        $totalHours += $daysData[$day]['undertime_hours'];
+                        $totalMinutes += $daysData[$day]['undertime_minutes'];
+                        if ($totalMinutes >= 60) {
+                            $totalHours += intdiv($totalMinutes, 60);
+                            $totalMinutes = $totalMinutes % 60;
+                        }
+                    } else {
+                        $daysData[$day]['undertime_hours'] = 0;
+                        $daysData[$day]['undertime_minutes'] = 0;
+                    }
+                } else {
+                    $daysData[$day]['undertime_hours'] = 0;
+                    $daysData[$day]['undertime_minutes'] = 0;
+                }
+            }
+        }
+
+        return compact('daysData', 'totalHours', 'totalMinutes');
     }
 }
