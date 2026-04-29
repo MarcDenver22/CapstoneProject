@@ -380,17 +380,24 @@ class ReportController extends Controller
             $daysData[$day] = [];
 
             if ($dayRecords && $dayRecords->count() > 0) {
-                $firstRecord = $dayRecords->first();
-                $lastRecord = $dayRecords->last();
+                $record = $dayRecords->first();
 
-                $daysData[$day]['am_arrival'] = $firstRecord->time_in ? Carbon::parse($firstRecord->time_in)->format('H:i') : '08:00';
-                $daysData[$day]['am_depart'] = '12:00';
-                $daysData[$day]['pm_arrival'] = '13:00';
-                $daysData[$day]['pm_depart'] = $lastRecord->time_out ? Carbon::parse($lastRecord->time_out)->format('H:i') : '17:00';
+                $daysData[$day]['am_arrival'] = $record->am_arrival
+                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
+                $daysData[$day]['am_depart'] = $record->am_departure
+                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
+                $daysData[$day]['pm_arrival'] = $record->pm_arrival
+                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
+                $daysData[$day]['pm_depart'] = $record->pm_departure
+                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                if ($firstRecord->time_in && $lastRecord->time_out) {
-                    $timeIn = Carbon::parse($firstRecord->time_in);
-                    $timeOut = Carbon::parse($lastRecord->time_out);
+                if ($record->am_arrival && $record->pm_departure) {
+                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
+                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
                     $expected_minutes = 480; // 8 hours
                     $actual_minutes = $timeIn->diffInMinutes($timeOut);
                     $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch
@@ -403,6 +410,9 @@ class ReportController extends Controller
                         $daysData[$day]['undertime_hours'] = 0;
                         $daysData[$day]['undertime_minutes'] = 0;
                     }
+                } else {
+                    $daysData[$day]['undertime_hours'] = 0;
+                    $daysData[$day]['undertime_minutes'] = 0;
                 }
             }
         }
@@ -483,36 +493,33 @@ class ReportController extends Controller
             $daysData[$day] = [];
 
             if ($dayRecords && $dayRecords->count() > 0) {
-                // Get the first and last record for the day
-                $firstRecord = $dayRecords->first();
-                $lastRecord = $dayRecords->last();
+                // Get the first record for the day
+                $record = $dayRecords->first();
 
-                // A.M. Arrival (first time_in of the day, or default 08:00)
-                if ($firstRecord->time_in) {
-                    $timeIn = Carbon::parse($firstRecord->time_in);
-                    $daysData[$day]['am_arrival'] = $timeIn->format('H:i');
-                } else {
-                    $daysData[$day]['am_arrival'] = '08:00';
-                }
+                // A.M. Arrival
+                $daysData[$day]['am_arrival'] = $record->am_arrival
+                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                // A.M. Departure (noon - 12:00)
-                $daysData[$day]['am_depart'] = '12:00';
+                // A.M. Departure
+                $daysData[$day]['am_depart'] = $record->am_departure
+                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                // P.M. Arrival (afternoon - 13:00)
-                $daysData[$day]['pm_arrival'] = '13:00';
+                // P.M. Arrival
+                $daysData[$day]['pm_arrival'] = $record->pm_arrival
+                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                // P.M. Departure (last time_out of the day, or default 17:00)
-                if ($lastRecord->time_out) {
-                    $timeOut = Carbon::parse($lastRecord->time_out);
-                    $daysData[$day]['pm_depart'] = $timeOut->format('H:i');
-                } else {
-                    $daysData[$day]['pm_depart'] = '17:00';
-                }
+                // P.M. Departure
+                $daysData[$day]['pm_depart'] = $record->pm_departure
+                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                // Calculate undertime
-                if ($firstRecord->time_in && $lastRecord->time_out) {
-                    $timeIn = Carbon::parse($firstRecord->time_in);
-                    $timeOut = Carbon::parse($lastRecord->time_out);
+                // Calculate undertime based on actual punch times
+                if ($record->am_arrival && $record->pm_departure) {
+                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
+                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
                     $expected_minutes = 480; // 8 hours
                     $actual_minutes = $timeIn->diffInMinutes($timeOut);
                     $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
@@ -532,6 +539,9 @@ class ReportController extends Controller
                         $daysData[$day]['undertime_hours'] = 0;
                         $daysData[$day]['undertime_minutes'] = 0;
                     }
+                } else {
+                    $daysData[$day]['undertime_hours'] = 0;
+                    $daysData[$day]['undertime_minutes'] = 0;
                 }
             }
         }
@@ -604,36 +614,33 @@ class ReportController extends Controller
             $daysData[$day] = [];
 
             if ($dayRecords && $dayRecords->count() > 0) {
-                // Get the first and last record for the day
-                $firstRecord = $dayRecords->first();
-                $lastRecord = $dayRecords->last();
+                // Get the first record for the day
+                $record = $dayRecords->first();
 
-                // A.M. Arrival (first time_in of the day, or default 08:00)
-                if ($firstRecord->time_in) {
-                    $timeIn = Carbon::parse($firstRecord->time_in);
-                    $daysData[$day]['am_arrival'] = $timeIn->format('H:i');
-                } else {
-                    $daysData[$day]['am_arrival'] = '08:00';
-                }
+                // A.M. Arrival
+                $daysData[$day]['am_arrival'] = $record->am_arrival
+                    ? Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                // A.M. Departure (noon - 12:00)
-                $daysData[$day]['am_depart'] = '12:00';
+                // A.M. Departure
+                $daysData[$day]['am_depart'] = $record->am_departure
+                    ? Carbon::parse($record->am_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                // P.M. Arrival (afternoon - 13:00)
-                $daysData[$day]['pm_arrival'] = '13:00';
+                // P.M. Arrival
+                $daysData[$day]['pm_arrival'] = $record->pm_arrival
+                    ? Carbon::parse($record->pm_arrival)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                // P.M. Departure (last time_out of the day, or default 17:00)
-                if ($lastRecord->time_out) {
-                    $timeOut = Carbon::parse($lastRecord->time_out);
-                    $daysData[$day]['pm_depart'] = $timeOut->format('H:i');
-                } else {
-                    $daysData[$day]['pm_depart'] = '17:00';
-                }
+                // P.M. Departure
+                $daysData[$day]['pm_depart'] = $record->pm_departure
+                    ? Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila')->format('H:i')
+                    : '—';
 
-                // Calculate undertime
-                if ($firstRecord->time_in && $lastRecord->time_out) {
-                    $timeIn = Carbon::parse($firstRecord->time_in);
-                    $timeOut = Carbon::parse($lastRecord->time_out);
+                // Calculate undertime based on actual punch times
+                if ($record->am_arrival && $record->pm_departure) {
+                    $timeIn = Carbon::parse($record->am_arrival)->setTimezone('Asia/Manila');
+                    $timeOut = Carbon::parse($record->pm_departure)->setTimezone('Asia/Manila');
                     $expected_minutes = 480; // 8 hours
                     $actual_minutes = $timeIn->diffInMinutes($timeOut);
                     $actual_work_minutes = $actual_minutes - 60; // Subtract 1 hour lunch break
@@ -653,6 +660,9 @@ class ReportController extends Controller
                         $daysData[$day]['undertime_hours'] = 0;
                         $daysData[$day]['undertime_minutes'] = 0;
                     }
+                } else {
+                    $daysData[$day]['undertime_hours'] = 0;
+                    $daysData[$day]['undertime_minutes'] = 0;
                 }
             }
         }
