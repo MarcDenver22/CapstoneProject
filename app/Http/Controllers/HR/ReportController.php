@@ -11,11 +11,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Collection;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
-    protected $auditLogger;
+    protected AuditLogger $auditLogger;
 
     public function __construct(AuditLogger $auditLogger)
     {
@@ -249,7 +250,7 @@ class ReportController extends Controller
     /**
      * Helper: Get report data based on type
      */
-    private function getReportData(Request $request, $type)
+    private function getReportData(Request $request, string $type)
     {
         return match($type) {
             'monthly' => $this->getMonthlyData($request),
@@ -292,7 +293,7 @@ class ReportController extends Controller
     /**
      * Output CSV stream
      */
-    private function outputCsvStream($records, $type)
+    private function outputCsvStream(Collection $records, string $type)
     {
         $output = fopen('php://output', 'w');
 
@@ -332,7 +333,7 @@ class ReportController extends Controller
     /**
      * Helper: Calculate working hours
      */
-    private function calculateHours($record)
+    private function calculateHours(Attendance $record)
     {
         if (!$record->time_in || !$record->time_out) {
             return 0;
@@ -344,7 +345,7 @@ class ReportController extends Controller
     /**
      * Helper: Calculate average time
      */
-    private function calculateAverageTime($records, $field)
+    private function calculateAverageTime(Collection $records, string $field)
     {
         $times = $records->whereNotNull($field)->pluck($field);
         
@@ -368,7 +369,7 @@ class ReportController extends Controller
     /**
      * Process attendance records into DTR day format
      */
-    private function processDaysDataForDtr($attendanceRecords)
+    private function processDaysDataForDtr(Collection $attendanceRecords)
     {
         $daysData = [];
         $recordsByDay = $attendanceRecords->groupBy(function($record) {
@@ -420,7 +421,7 @@ class ReportController extends Controller
         return $daysData;
     }
 
-    private function calculateAttendanceRate($records)
+    private function calculateAttendanceRate(Collection $records)
     {
         if ($records->isEmpty()) {
             return 0;
@@ -435,7 +436,7 @@ class ReportController extends Controller
     /**
      * Helper: Calculate average department attendance rate
      */
-    private function calculateAverageDepartmentRate($employeeSummary)
+    private function calculateAverageDepartmentRate(Collection $employeeSummary)
     {
         if (empty($employeeSummary)) {
             return 0;
