@@ -151,7 +151,7 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         Route::post('/', [EmployeesController::class, 'store'])->name('store');
         Route::get('/{id}', [EmployeesController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [EmployeesController::class, 'edit'])->name('edit');
-        Route::patch('/{id}', [EmployeesController::class, 'update'])->name('update');
+        Route::match(['put', 'patch'], '/{id}', [EmployeesController::class, 'update'])->name('update');
         Route::delete('/{id}', [EmployeesController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/reset-face', [EmployeesController::class, 'resetFaceEnrollment'])->name('reset_face');
     });

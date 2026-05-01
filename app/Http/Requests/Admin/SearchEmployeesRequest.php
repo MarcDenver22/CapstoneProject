@@ -12,7 +12,7 @@ class SearchEmployeesRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && Auth::user()?->role === 'admin';
+        return Auth::check() && in_array(Auth::user()?->role, ['admin', 'super_admin'], true);
     }
 
     /**

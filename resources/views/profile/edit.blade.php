@@ -50,7 +50,7 @@
                     id="name" 
                     name="name" 
                     value="{{ old('name', $user->name) }}" 
-                    placeholder="John Doe"
+                    placeholder=""
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('name') border-red-500 @enderror"
                     required
                 >
@@ -67,7 +67,7 @@
                     id="email" 
                     name="email" 
                     value="{{ old('email', $user->email) }}" 
-                    placeholder="john@example.com"
+                    placeholder=""
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('email') border-red-500 @enderror"
                     required
                 >
@@ -84,11 +84,11 @@
                     id="employee_id" 
                     name="employee_id" 
                     value="{{ $user->faculty_id ?? 'N/A' }}" 
-                    placeholder="EMP001"
+                    placeholder=""
                     disabled
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
                 >
-                <p class="text-gray-500 text-xs mt-1">Your Employee ID is auto-generated and cannot be changed</p>
+                <p class="text-gray-500 text-xs mt-1">Your Employee ID cannot be changed</p>
             </div>
 
             <!-- Department -->

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 class EmployeesController extends Controller
 {
+    private const MANAGEABLE_ROLES = ['employee', 'hr'];
+
     /**
      * Display a listing of all employees
      */
@@ -50,13 +52,13 @@ class EmployeesController extends Controller
     /**
      * Display a specific employee details
      */
-    public function show($id)
+    public function show(int|string $id)
     {
         $employee = User::with('department')->findOrFail($id);
 
         // Verify it's an employee
-        if ($employee->role !== 'employee') {
-            return redirect()->route('admin.employees.list')->with('error', 'User is not an employee');
+        if (!in_array($employee->role, self::MANAGEABLE_ROLES, true)) {
+            return redirect()->route('admin.employees.list')->with('error', 'User cannot be managed from this section');
         }
 
         return view('admin.employees.show', compact('employee'));
@@ -65,7 +67,7 @@ class EmployeesController extends Controller
     /**
      * Delete an employee
      */
-    public function destroy($id)
+    public function destroy(int|string $id)
     {
         $employee = User::findOrFail($id);
         
@@ -85,7 +87,7 @@ class EmployeesController extends Controller
     /**
      * Reset face enrollment for an employee
      */
-    public function resetFaceEnrollment($id)
+    public function resetFaceEnrollment(int|string $id)
     {
         $employee = User::findOrFail($id);
 
@@ -160,13 +162,13 @@ class EmployeesController extends Controller
     /**
      * Show form to edit employee
      */
-    public function edit($id)
+    public function edit(int|string $id)
     {
         $employee = User::with('department')->findOrFail($id);
         $departments = Department::active()->get();
 
-        if ($employee->role !== 'employee') {
-            return redirect()->route('admin.employees.list')->with('error', 'User is not an employee');
+        if (!in_array($employee->role, self::MANAGEABLE_ROLES, true)) {
+            return redirect()->route('admin.employees.list')->with('error', 'User cannot be managed from this section');
         }
 
         return view('admin.employees.edit', compact('employee', 'departments'));
@@ -175,12 +177,12 @@ class EmployeesController extends Controller
     /**
      * Update an existing employee
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int|string $id)
     {
         $employee = User::findOrFail($id);
 
-        if ($employee->role !== 'employee') {
-            return redirect()->route('admin.employees.list')->with('error', 'User is not an employee');
+        if (!in_array($employee->role, self::MANAGEABLE_ROLES, true)) {
+            return redirect()->route('admin.employees.list')->with('error', 'User cannot be managed from this section');
         }
 
         $validated = $request->validate([
@@ -199,14 +201,18 @@ class EmployeesController extends Controller
         if ($employee->email !== $validated['email']) {
             $changes['email'] = ['from' => $employee->email, 'to' => $validated['email']];
         }
-        if ($employee->position !== $validated['position']) {
-            $changes['position'] = ['from' => $employee->position, 'to' => $validated['position']];
+        $position = $validated['position'] ?? null;
+        $departmentId = $validated['department_id'] ?? null;
+        $facultyId = $validated['faculty_id'] ?? null;
+
+        if ($employee->position !== $position) {
+            $changes['position'] = ['from' => $employee->position, 'to' => $position];
         }
-        if ($employee->department_id !== $validated['department_id']) {
-            $changes['department_id'] = ['from' => $employee->department_id, 'to' => $validated['department_id']];
+        if ($employee->department_id !== $departmentId) {
+            $changes['department_id'] = ['from' => $employee->department_id, 'to' => $departmentId];
         }
-        if ($employee->faculty_id !== $validated['faculty_id']) {
-            $changes['faculty_id'] = ['from' => $employee->faculty_id, 'to' => $validated['faculty_id']];
+        if ($employee->faculty_id !== $facultyId) {
+            $changes['faculty_id'] = ['from' => $employee->faculty_id, 'to' => $facultyId];
         }
 
         $employee->update($validated);

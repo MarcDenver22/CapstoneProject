@@ -73,7 +73,7 @@ class ReportController extends Controller
                 'late' => $userRecords->where('status', 'late')->count(),
                 'half_day' => $userRecords->where('status', 'half_day')->count(),
                 'leave' => $userRecords->where('status', 'leave')->count(),
-                'total_hours' => $userRecords->sum(function ($record) {
+                'total_hours' => $userRecords->sum(function (Attendance $record) {
                     return $this->calculateHours($record);
                 }),
                 'records' => $userRecords,
@@ -110,7 +110,7 @@ class ReportController extends Controller
             'late' => $records->where('status', 'late')->count(),
             'half_day' => $records->where('status', 'half_day')->count(),
             'leave' => $records->where('status', 'leave')->count(),
-            'total_hours' => $records->sum(function ($record) {
+            'total_hours' => $records->sum(function (Attendance $record) {
                 return $this->calculateHours($record);
             }),
             'average_time_in' => $this->calculateAverageTime($records, 'time_in'),

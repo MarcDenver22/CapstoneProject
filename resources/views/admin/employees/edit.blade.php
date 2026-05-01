@@ -2,15 +2,11 @@
 
 @section('title', 'Edit Employee')
 @section('header', 'Edit Employee')
-@section('subheader', $employee->name)
+@section('subheader', $employee?->name ?? 'Edit Employee')
 
 @section('content')
 
 <div class="max-w-2xl">
-    <!-- Back Button -->
-    <a href="{{ route('admin.employees.list') }}" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6">
-        <i class="fas fa-arrow-left"></i> Back to Employees
-    </a>
 
     <!-- Form Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -39,7 +35,7 @@
                     id="name" 
                     name="name" 
                     value="{{ old('name', $employee->name) }}" 
-                    placeholder="John Doe"
+                    placeholder=""
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('name') border-red-500 @enderror"
                     required
                 >
@@ -56,7 +52,7 @@
                     id="email" 
                     name="email" 
                     value="{{ old('email', $employee->email) }}" 
-                    placeholder="john@example.com"
+                    placeholder=""
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror"
                     required
                 >
@@ -73,7 +69,7 @@
                     id="faculty_id" 
                     name="faculty_id" 
                     value="{{ old('faculty_id', $employee->faculty_id) }}" 
-                    placeholder="2026-001"
+                    placeholder="0000"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('faculty_id') border-red-500 @enderror"
                 >
                 @error('faculty_id')
@@ -84,19 +80,25 @@
             <!-- Department -->
             <div>
                 <label for="department" class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                @php(
+                    $selectedDepartmentId = old('department_id', $employee?->department_id)
+                )
+                @php($departments = collect($departments ?? []))
                 <select 
                     id="department" 
                     name="department_id"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="">Select a department</option>
-                    @forelse($departments ?? [] as $dept)
-                        <option value="{{ $dept->id }}" {{ old('department_id', $employee->department_id) == $dept->id ? 'selected' : '' }}>
-                            {{ $dept->name }}
-                        </option>
-                    @empty
+                    @if($departments->isNotEmpty())
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}" {{ $selectedDepartmentId == $dept->id ? 'selected' : '' }}>
+                                {{ $dept->name }}
+                            </option>
+                        @endforeach
+                    @else
                         <option value="" disabled>No departments available</option>
-                    @endforelse
+                    @endif
                 </select>
             </div>
 

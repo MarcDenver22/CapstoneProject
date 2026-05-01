@@ -7,10 +7,6 @@
 @section('content')
 
 <div class="max-w-2xl">
-    <!-- Back Button -->
-    <a href="{{ route('admin.employees.list') }}" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6">
-        <i class="fas fa-arrow-left"></i> Back to Employees
-    </a>
 
     <!-- Form Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -38,7 +34,7 @@
                     id="name" 
                     name="name" 
                     value="{{ old('name') }}" 
-                    placeholder="John Doe"
+                    placeholder=""
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('name') border-red-500 @enderror"
                     required
                 >
@@ -55,7 +51,7 @@
                     id="email" 
                     name="email" 
                     value="{{ old('email') }}" 
-                    placeholder="john@example.com"
+                    placeholder=""
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror"
                     required
                 >
@@ -72,7 +68,7 @@
                     id="faculty_id" 
                     name="faculty_id" 
                     value="{{ old('faculty_id') }}" 
-                    placeholder="0001"
+                    placeholder="0000"
                     maxlength="4"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('faculty_id') border-red-500 @enderror"
                     required
@@ -85,6 +81,7 @@
             <!-- Department -->
             <div>
                 <label for="department_id" class="block text-sm font-semibold text-gray-700 mb-2">Department *</label>
+                @php($departments = collect($departments ?? []))
                 <select 
                     id="department_id" 
                     name="department_id"
@@ -92,13 +89,15 @@
                     required
                 >
                     <option value="">Select a department</option>
-                    @forelse($departments ?? [] as $dept)
+                    @if($departments->isNotEmpty())
+                        @foreach($departments as $dept)
                         <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
                             {{ $dept->name }}
                         </option>
-                    @empty
+                        @endforeach
+                    @else
                         <option value="" disabled>No departments available</option>
-                    @endforelse
+                    @endif
                 </select>
                 @error('department_id')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>

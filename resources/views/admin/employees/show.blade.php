@@ -6,11 +6,6 @@
 
 @section('content')
 
-<!-- Back Button -->
-<a href="{{ route('admin.employees.list') }}" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6">
-    <i class="fas fa-arrow-left"></i> Back to Employees
-</a>
-
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Main Profile -->
     <div class="lg:col-span-2">
