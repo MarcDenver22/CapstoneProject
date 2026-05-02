@@ -167,26 +167,6 @@ class KioskScanController extends Controller
     }
 
     /**
-     * Extract descriptor from base64 encoded face image (DEPRECATED)
-     */
-    private function extractDescriptorFromBase64($base64Data): array
-    {
-        // This method is deprecated. Descriptors are now extracted client-side.
-        // Keeping for backward compatibility only.
-        // Generate descriptor from base64 hash
-        $hash = hash('sha256', $base64Data);
-        $descriptor = [];
-        
-        for ($i = 0; $i < 128; $i++) {
-            $hexPair = substr($hash, $i * 2, 2);
-            $value = (hexdec($hexPair) / 255) * 2 - 1; // Convert to -1 to 1 range
-            $descriptor[] = (float)$value;
-        }
-        
-        return $descriptor;
-    }
-
-    /**
      * Record attendance based on face descriptor match.
      *
      * Online path  → validates face match against Supabase, saves immediately.
