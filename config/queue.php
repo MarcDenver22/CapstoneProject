@@ -36,10 +36,12 @@ return [
         ],
 
         'database' => [
-            'driver' => 'database',
-            'connection' => env('DB_QUEUE_CONNECTION'),
-            'table' => env('DB_QUEUE_TABLE', 'jobs'),
-            'queue' => env('DB_QUEUE', 'default'),
+            'driver'      => 'database',
+            // Use the local SQLite DB so queue jobs persist even when Supabase
+            // is unreachable.  The SQLite file lives on the kiosk machine.
+            'connection'  => env('DB_QUEUE_CONNECTION', 'sqlite'),
+            'table'       => env('DB_QUEUE_TABLE', 'jobs'),
+            'queue'       => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
             'after_commit' => false,
         ],
@@ -103,7 +105,7 @@ return [
     */
 
     'batching' => [
-        'database' => env('DB_CONNECTION', 'sqlite'),
+        'database' => env('DB_QUEUE_CONNECTION', 'sqlite'),
         'table' => 'job_batches',
     ],
 
@@ -121,9 +123,9 @@ return [
     */
 
     'failed' => [
-        'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'sqlite'),
-        'table' => 'failed_jobs',
+        'driver'   => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
+        'database' => env('DB_QUEUE_CONNECTION', 'sqlite'),
+        'table'    => 'failed_jobs',
     ],
 
 ];

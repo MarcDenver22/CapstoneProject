@@ -20,6 +20,7 @@ class Attendance extends Model
         'status',
         'notes',
         'liveness_verified',
+        'synced',
         'am_arrival',
         'am_departure',
         'pm_arrival',
@@ -35,6 +36,7 @@ class Attendance extends Model
         'pm_arrival' => 'datetime',
         'pm_departure' => 'datetime',
         'liveness_verified' => 'boolean',
+        'synced' => 'boolean',
     ];
 
     public function user()
