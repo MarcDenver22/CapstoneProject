@@ -58,6 +58,16 @@ return [
         //     'sslmode' => env('DB_SSLMODE', 'prefer'),
         // ],
 
+        // LOCAL SQLite — used exclusively for the queue (jobs / failed_jobs / job_batches).
+        // Keeps queue jobs on the local machine so the kiosk can queue attendance
+        // records even when Supabase is unreachable (power outage / internet loss).
+        'sqlite' => [
+            'driver'                  => 'sqlite',
+            'database'                => env('LOCAL_DB_DATABASE', database_path('local.sqlite')),
+            'prefix'                  => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+        ],
+
         // PRIMARY: Supabase Postgres
         // Only active database connection for this application
 

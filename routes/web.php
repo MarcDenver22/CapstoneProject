@@ -59,6 +59,7 @@ Route::post('/kiosk/find-user', [KioskScanController::class, 'findUser'])->name(
 Route::get('/kiosk/get-user-descriptor', [KioskScanController::class, 'getUserDescriptor'])->name('kiosk.get-descriptor');
 Route::get('/kiosk/test-descriptor', [KioskScanController::class, 'testDescriptor'])->name('kiosk.test-descriptor');
 Route::get('/kiosk/view-descriptors', [KioskScanController::class, 'viewDescriptors'])->name('kiosk.view-descriptors');
+Route::get('/kiosk/queue-status', [KioskScanController::class, 'queueStatus'])->name('kiosk.queue-status');
 
 // Employee routes
 Route::middleware('auth')->prefix('employee')->name('employee.')->group(function () {

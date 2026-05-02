@@ -2,23 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\RecordAttendanceJob;
 use App\Models\Attendance;
 use App\Models\AttendanceLog;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\ConnectivityService;
 use App\Services\FaceRecognitionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class KioskScanController extends Controller
 {
     protected FaceRecognitionService $faceRecognition;
+    protected ConnectivityService $connectivity;
 
-    public function __construct(FaceRecognitionService $faceRecognition)
+    public function __construct(FaceRecognitionService $faceRecognition, ConnectivityService $connectivity)
     {
         $this->faceRecognition = $faceRecognition;
+        $this->connectivity    = $connectivity;
     }
 
     /**
@@ -182,7 +187,11 @@ class KioskScanController extends Controller
     }
 
     /**
-     * Record attendance based on face descriptor match
+     * Record attendance based on face descriptor match.
+     *
+     * Online path  → validates face match against Supabase, saves immediately.
+     * Offline path → skips server-side DB write, queues RecordAttendanceJob
+     *                 so the record is persisted once connectivity is restored.
      */
     public function scan(Request $request): JsonResponse
     {
@@ -193,6 +202,37 @@ class KioskScanController extends Controller
                 'user_id' => 'required|integer',
             ]);
 
+            // ── Offline detection ────────────────────────────────────────
+            // If Supabase is unreachable we queue the job locally so the
+            // record is not lost.  We trust the client-side face match
+            // that already occurred in face-api.js for the user identity.
+            if (!$this->connectivity->isOnline()) {
+                $sessionUser = session('kiosk_user');
+                $userName    = $sessionUser ? $sessionUser->name : 'Employee #' . $validated['user_id'];
+
+                RecordAttendanceJob::dispatch(
+                    $validated['user_id'],
+                    now()->toDateTimeString(),
+                    null,  // confidence is not measurable server-side when offline
+                    null,
+                )->onQueue('default');
+
+                Log::info('KioskScan: Supabase unreachable — attendance queued', [
+                    'user_id' => $validated['user_id'],
+                ]);
+
+                $pendingCount = $this->pendingJobCount();
+
+                return response()->json([
+                    'status'        => 'offline',
+                    'offline'       => true,
+                    'message'       => "Offline mode: Check-in queued for {$userName}",
+                    'name'          => $userName,
+                    'pending_count' => $pendingCount,
+                ]);
+            }
+
+            // ── Online path (existing logic) ─────────────────────────────
             // Get the user from session (they already logged in with employee ID)
             $user = User::find($validated['user_id']);
             if (!$user) {
@@ -292,6 +332,7 @@ class KioskScanController extends Controller
                 [
                     'status' => 'present',
                     'liveness_verified' => true,
+                    'synced' => true,
                 ]
             );
 
@@ -372,6 +413,7 @@ class KioskScanController extends Controller
                 $dtr->time_out = $dtr->am_departure;
             }
 
+            $dtr->synced = true;
             $dtr->save();
 
             // Log audit trail
@@ -405,6 +447,52 @@ class KioskScanController extends Controller
                 'status' => 'error',
                 'message' => 'Error during face matching: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Return the current queue sync status for the kiosk UI.
+     *
+     * Reads from the local SQLite jobs table (which is always reachable)
+     * and returns counts for pending, failed, and total synced jobs.
+     */
+    public function queueStatus(): JsonResponse
+    {
+        $pending = $this->pendingJobCount();
+        $failed  = $this->failedJobCount();
+        $online  = $this->connectivity->isOnline();
+
+        return response()->json([
+            'online'        => $online,
+            'pending_count' => $pending,
+            'failed_count'  => $failed,
+            'status'        => $online
+                ? ($pending > 0 ? 'syncing' : 'synced')
+                : 'offline',
+        ]);
+    }
+
+    /**
+     * Count jobs currently pending in the local queue.
+     */
+    private function pendingJobCount(): int
+    {
+        try {
+            return DB::connection('sqlite')->table('jobs')->count();
+        } catch (\Exception) {
+            return 0;
+        }
+    }
+
+    /**
+     * Count jobs that have permanently failed.
+     */
+    private function failedJobCount(): int
+    {
+        try {
+            return DB::connection('sqlite')->table('failed_jobs')->count();
+        } catch (\Exception) {
+            return 0;
         }
     }
 
