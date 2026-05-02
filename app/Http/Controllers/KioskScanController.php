@@ -213,7 +213,7 @@ class KioskScanController extends Controller
                 RecordAttendanceJob::dispatch(
                     $validated['user_id'],
                     now()->toDateTimeString(),
-                    0.0,   // confidence unknown offline
+                    null,  // confidence is not measurable server-side when offline
                     null,
                 )->onQueue('default');
 
@@ -224,7 +224,7 @@ class KioskScanController extends Controller
                 $pendingCount = $this->pendingJobCount();
 
                 return response()->json([
-                    'status'        => 'queued',
+                    'status'        => 'offline',
                     'offline'       => true,
                     'message'       => "Offline mode: Check-in queued for {$userName}",
                     'name'          => $userName,

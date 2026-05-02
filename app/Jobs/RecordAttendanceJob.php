@@ -48,23 +48,24 @@ class RecordAttendanceJob implements ShouldQueue
     /**
      * @param int         $userId         users.id of the employee
      * @param string      $punchedAt      Full datetime string (Y-m-d H:i:s) of the punch
-     * @param float       $confidence     Face-match confidence (0–1)
+     * @param float|null  $confidence     Face-match confidence (0–1), null when not measurable offline
      * @param string|null $photoPath      Optional stored photo path
      */
     public function __construct(
         public readonly int $userId,
         public readonly string $punchedAt,
-        public readonly float $confidence,
+        public readonly ?float $confidence,
         public readonly ?string $photoPath = null,
     ) {}
 
     /**
      * Delays (in seconds) between each retry attempt.
-     * Index 0 = delay before attempt 2, index 1 = before attempt 3, etc.
+     * With $tries = 5 there are 4 retries, so 4 delays:
+     *   retry 1 →  10 s, retry 2 →  30 s, retry 3 → 60 s, retry 4 → 120 s
      */
     public function backoff(): array
     {
-        return [10, 30, 60, 120, 300];
+        return [10, 30, 60, 120];
     }
 
     /**
@@ -131,7 +132,7 @@ class RecordAttendanceJob implements ShouldQueue
             'punch_type'     => $punchType,
             'punched_at'     => $now,
             'method'         => 'face_recognition',
-            'confidence'     => round($this->confidence, 4),
+            'confidence'     => $this->confidence !== null ? round($this->confidence, 4) : null,
             'liveness_passed' => true,
             'photo_path'     => $this->photoPath,
             'notes'          => 'Offline sync — kiosk face scan ' . strtoupper($punchType),
