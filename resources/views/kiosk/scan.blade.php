@@ -358,5 +358,8 @@
 
     <!-- Load scanner module -->
     <script src="/js/face-scanner.js"></script>
+
+    <!-- Offline / sync status banner -->
+    @include('kiosk.sync_status')
 </body>
 </html>
